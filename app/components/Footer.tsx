@@ -1,0 +1,22 @@
+const Footer = () => {
+  return (
+    <footer className="bg-[#3674B5] text-white py-8">
+      <div className="container mx-auto px-4 text-center">
+        <p>&copy; {new Date().getFullYear()} Your Name. All rights reserved.</p>
+        <p className="mt-2">
+          <a href="/privacy-policy" className="hover:underline">
+            Privacy Policy
+          </a>{" "}
+          |
+          <a href="/terms-of-service" className="hover:underline ml-2">
+            Terms of Service
+          </a>
+        </p>
+        <p className="mt-4 text-sm">Designed and built with passion</p>
+      </div>
+    </footer>
+  )
+}
+
+export default Footer
+

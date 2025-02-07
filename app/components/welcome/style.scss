@@ -1,0 +1,407 @@
+@use "sass:math";
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap');
+
+/* -------------------------------------------------------
+   1) 変数
+   - レスポンシブ用に clamp() を使用
+------------------------------------------------------- */
+$number_of_custom-text: 12;
+$number_of_particle: 12;
+
+// 幅・高さを画面幅に応じて可変に
+$width: clamp(60px, 8vw, 100px);
+$height: clamp(60px, 8vw, 100px);
+
+// テキストのフォントサイズも可変に
+$text-size: clamp(1.6rem, 4vw, 3rem);
+
+// パーティクルが飛び散る半径を大きめに設定
+$particle-distance: clamp(100px, 15vw, 300px);
+
+// 角度を割り振る計算 (1文字あたりのdeg, 1パーティクルあたりのdeg)
+$mult_num_custom-text: math.div(360deg, $number_of_custom-text);
+$mult_num_particle: math.div(360deg, $number_of_particle);
+
+/* -------------------------------------------------------
+   2) ベーススタイル
+------------------------------------------------------- */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+body {
+  /* 全体をsans-serifにしたい場合はここも修正: */
+  font-family: sans-serif; /* or 'Montserrat', sans-serif; */
+  background: #FFF;
+  position: relative;
+  font-size: 100%;
+  text-align: center;
+}
+
+/* -------------------------------------------------------
+   中心基準 .criterion
+   - テキストサイズをやや大きめに
+------------------------------------------------------- */
+.criterion {
+  font-size: $text-size;  /* ここで文字サイズ指定 */
+  position: absolute;
+  left: 50%;
+  height: 0;
+  width: 0;
+
+  &.line1 {
+    /* 画面中央よりやや上め */
+    top: 45%;
+    transform: translate(calc(#{ $width } * -0.5), calc(#{ $height } * -0.5));
+  }
+
+  &.line2 {
+    /* 1行目より少し下に配置 */
+    top: calc(45% + 60px);
+    transform: translate(calc(#{ $width } * -0.5), calc(#{ $height } * -0.5));
+  }
+}
+
+/* -------------------------------------------------------
+   背景パネル .background
+   - テキスト数分、横に並べる
+------------------------------------------------------- */
+.background {
+  position: absolute;
+  top: 0;
+  height: 100vh;
+  width: 0;
+  animation: background-animation 2s ease-in-out 4s 1 forwards;
+}
+
+@for $i from 0 through $number_of_custom-text - 1 {
+  .background#{$i} {
+    // 100% を 文字数 で割って左位置を決める (例: 12文字なら 8.333...% 間隔)
+    left: math.div(100%, $number_of_custom-text) * $i;
+    background-color: hsl(
+      math.div($i * $mult_num_custom-text, 1deg),
+      80%,
+      60%
+    );
+  }
+}
+
+@keyframes background-animation {
+  0% {
+    width: 0;
+  }
+  50% {
+    width: 12.5%;
+    opacity: 1;
+  }
+  100% {
+    width: 25%;
+    opacity: 0;
+  }
+}
+
+/* -------------------------------------------------------
+   テキスト .custom-text
+   - 幅/高さを大きめにし、フォントも sans-serif
+------------------------------------------------------- */
+.custom-text {
+  font-family: sans-serif; /* 文字フォントをsans-serifに */
+  position: absolute;
+  width: $width;
+  line-height: $height;
+  opacity: 0;
+  overflow: hidden;
+
+  &::after {
+    z-index: -1;
+    content: '';
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: $height;
+  }
+}
+
+// 各文字に対してアニメーション
+@for $i from 0 through $number_of_custom-text - 1 {
+  // 遅延時間を計算 (1s + i*200ms)
+  $delay: 1s + ($i * 200ms);
+
+  .custom-text#{$i} {
+    // 横位置: 「(文字数/2 - i)*幅」を引いて中央寄せ
+    left: calc(
+            (
+              (#{ $i } - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+            )
+            + (#{ $width } / 2)
+          );
+    top: 0;
+
+    // 2段階のアニメーションを連続して行う
+    animation:
+      custom-text-animation#{$i}   1s  ease-in-out $delay 1 normal forwards,
+      custom-text2-animation#{$i}  2s  ease-in-out 5s     1 normal forwards;
+
+    &::after {
+      animation: custom-text-after-animation#{$i} 2s ease-in-out 3s 1 normal forwards;
+    }
+  }
+}
+
+// 第1段階 (スケールアップで登場)
+@for $i from 0 through $number_of_custom-text - 1 {
+  @keyframes custom-text-animation#{$i} {
+    0% {
+      transform: scale(0,0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(3,3);
+    }
+    100% {
+      transform: scale(1,1);
+      opacity: 1;
+    }
+  }
+}
+
+// ::after のアニメ (バーが横に伸びて消える)
+@for $i from 0 through $number_of_custom-text - 1 {
+  @keyframes custom-text-after-animation#{$i} {
+    0% {
+      width: 0;
+      background-color: hsl(
+        math.div($i * $mult_num_custom-text, 1deg),
+        80%,
+        60%
+      );
+      opacity: 1;
+    }
+    50% {
+      width: $width;
+      opacity: 1;
+    }
+    100% {
+      left: $width;
+      opacity: 0;
+    }
+  }
+}
+
+// 第2段階 (左→右へスライドフェード or 最後だけ回転拡大)
+@for $i from 0 through $number_of_custom-text - 1 {
+  @keyframes custom-text2-animation#{$i} {
+    @if $i != ($number_of_custom-text - 1) {
+      // 通常文字
+      0% {
+        left: calc(
+            (
+              (#{ $i } - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+            )
+            + (#{ $width } / 2)
+          );
+        opacity: 1;
+      }
+      50% {
+        left: calc(
+            (
+              ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+            )
+            + (#{ $width } / 2)
+          );
+        opacity: 0;
+      }
+      100% {
+        left: calc(
+                (
+                  ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+                )
+                + (#{ $width } / 2)
+              );
+        opacity: 0;
+      }
+    }
+    @else {
+      // 最後の文字(例: ": )")のみ拡大・回転
+      0% {
+        left: calc(
+            (
+              (#{ $i } - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+            )
+            + (#{ $width } / 2)
+          );
+        opacity: 1;
+        top: 0;
+        transform: scale(1,1);
+      }
+      50% {
+        left: calc(
+                (
+                  ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+                )
+                + (#{ $width } / 2)
+              );
+        opacity: 1;
+        transform: scale(1,1);
+      }
+      65% {
+        top: 0;
+        transform: scale(1,1);
+      }
+      70% {
+        transform: scale(3,3) rotate(90deg);
+        top: -30px;
+      }
+      75% {
+        left: calc(
+                (
+                  ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+                )
+                + (#{ $width } / 2)
+              );
+        top: 0;
+        opacity: 1;
+        transform: scale(2,2) rotate(90deg);
+      }
+      85% {
+        left: calc(
+                (
+                  ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+                )
+                + (#{ $width } / 2)
+              );
+      }
+      100% {
+        left: 1000px;
+        opacity: 0;
+        transform: scale(2,2) rotate(90deg);
+      }
+    }
+  }
+}
+
+/* -------------------------------------------------------
+   frame (.frame) - 円形フレーム
+   文字に合わせて落ちてくるアニメ
+------------------------------------------------------- */
+.frame {
+  position: absolute;
+  width: $width;
+  height: $height;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+@for $i from 0 through $number_of_custom-text - 1 {
+  // 遅延
+  $delay: ($i * 200)ms;
+
+  .frame#{$i} {
+    left: calc(
+                (
+                  ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+                )
+                + (#{ $width } / 2)
+              );
+    top: 0;
+    background-color: hsl(
+      math.div($i * $mult_num_custom-text, 1deg),
+      80%,
+      60%
+    );
+    animation: frame-animation#{$i} 1s ease-in-out $delay 1 normal forwards;
+  }
+
+  @keyframes frame-animation#{$i} {
+    0% {
+      transform: translateY(-1000px);
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 0;
+    }
+  }
+}
+
+/* -------------------------------------------------------
+   particle (.particle)
+   文字毎に複数のパーティクルが飛び散る
+   - Stylusコードを参考に計算を見直し
+   - 半径を $particle-distance に
+------------------------------------------------------- */
+.particle {
+  position: absolute;
+  width: $width;
+  height: $height;
+  border-radius: 50%;
+}
+
+@for $i from 0 through $number_of_custom-text - 1 {
+  @for $j from 0 through $number_of_particle - 1 {
+    // 遅延時間
+    $delay: 1s + ($i * 200ms);
+
+    .particle#{$i}#{$j} {
+      // 初期位置 (文字の真ん中付近)
+      left: calc(
+                (
+                  ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+                )
+                + (#{ $width } / 2)
+              );
+      top: 0;
+      opacity: 0;
+      background-color: hsl(
+        math.div($i * $mult_num_custom-text, 1deg),
+        80%,
+        60%
+      );
+      animation: particle-animation#{$i}#{$j} 1s ease-in-out $delay 1 normal forwards;
+    }
+
+    @keyframes particle-animation#{$i}#{$j} {
+      // 0%: 最初は文字上に小さく配置
+      0% {
+        left: calc(
+                (
+                  ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+                )
+                + (#{ $width } / 2)
+              );
+        top: 0;
+        opacity: 0;
+        transform: scale(1,1);
+      }
+      // 100%: 角度に沿って飛び散る(半径 $particle-distance)
+      100% {
+        opacity: 1;
+        transform: scale(0,0);
+
+        // 角度 (deg) = $j * $mult_num_particle
+        // Sass の cos/sin はラジアン指定のため、
+        // deg → ラジアン = (angle / 1deg) * math.$pi / 180
+        left: calc(
+                (
+                  ((#{ $i } + 1) - (#{ $number_of_custom-text } * 0.5)) * #{ $width }
+                )
+                + (#{ $width } / 2)
+                + math.cos( math.div(math.div($j * $mult_num_particle, 1deg) * math.$pi, 180) )
+                * $particle-distance
+              );
+        top: calc(math.sin( math.div(math.div($j * $mult_num_particle, 1deg) * math.$pi, 180) )
+            * $particle-distance);
+      }
+    }
+  }
+}
