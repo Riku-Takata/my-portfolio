@@ -4,65 +4,65 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 83 27% 85%;
+    --foreground: 33 19% 26%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 60 33% 92%;
+    --card-foreground: 33 19% 26%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 60 33% 92%;
+    --popover-foreground: 33 19% 26%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 25 77% 55%;
+    --primary-foreground: 60 33% 92%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 33 19% 63%;
+    --secondary-foreground: 60 33% 92%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 33 19% 63%;
+    --muted-foreground: 33 19% 26%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 33 19% 63%;
+    --accent-foreground: 60 33% 92%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 60 33% 92%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 33 19% 63%;
+    --input: 33 19% 63%;
+    --ring: 25 77% 55%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 33 19% 26%;
+    --foreground: 60 33% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 33 19% 26%;
+    --card-foreground: 60 33% 92%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 33 19% 26%;
+    --popover-foreground: 60 33% 92%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 25 77% 55%;
+    --primary-foreground: 60 33% 92%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 33 19% 63%;
+    --secondary-foreground: 60 33% 92%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 33 19% 63%;
+    --muted-foreground: 60 33% 92%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 33 19% 63%;
+    --accent-foreground: 60 33% 92%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 60 33% 92%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 33 19% 63%;
+    --input: 33 19% 63%;
+    --ring: 25 77% 55%;
   }
 }
 
@@ -100,3 +100,109 @@
   animation-fill-mode: forwards;
 }
 
+/* SVG全体の大きさを調整したい場合はここで設定してもOK */
+/*
+svg {
+  width: 256px;
+  height: 256px;
+}
+*/
+
+/* --- SMOKE アニメーション設定 --- */
+#smoke-1 {
+  stroke-dasharray: 0, 10;
+  animation: smoke 5s ease infinite;
+}
+#smoke-2 {
+  stroke-dasharray: 0, 10;
+  animation: smoke 5s 0.5s ease infinite;
+}
+
+@keyframes smoke {
+  0% {
+    stroke-dasharray: 0, 10;
+  }
+  50% {
+    stroke-dasharray: 10, 0;
+  }
+  100% {
+    stroke-dasharray: 10, 0;
+    opacity: 0;
+  }
+}
+
+/* すでに smoke アニメーションなどを定義している場合はそのままでOK */
+
+/* --- 全行共通の初期状態をリセット (任意) --- */
+#line-1,
+#line-2,
+#line-3,
+#line-4 {
+  /* 一度幅0から開始するために width:0 にしておくとわかりやすい */
+  width: 0;
+  opacity: 0;
+  transform: translateX(0);
+}
+
+/* 
+  アニメーションはすべて同じ keyframes(linesCycle) を使うが、
+  開始タイミング (animation-delay) を各行でズラす。
+*/
+#line-1 {
+  animation: linesCycle 13s linear infinite; /* 10秒で1サイクル */
+  /* line-1 は最初から開始 (delay=0) */
+}
+#line-2 {
+  animation: linesCycle 13s linear infinite;
+  /* line-2 は1.5秒遅れで開始 */
+  animation-delay: 1.5s;
+}
+#line-3 {
+  animation: linesCycle 13s linear infinite;
+  animation-delay: 3s;
+}
+#line-4 {
+  animation: linesCycle 13s linear infinite;
+  animation-delay: 4.5s;
+}
+
+/* 
+  10秒間の内訳 (例) 
+  0～15%  : (最初の1.5秒) 幅が0 → 14pxへ伸びる (書き出し)
+  15～60% : 書き終わったら 60% までそのまま表示
+  60～70% : 右へスライドアウト開始 (transform: translateX(100%))
+  70～100%: 不透明度を0にして表示消去、最終的に width=0 に戻す
+*/
+@keyframes linesCycle {
+  0% {
+    width: 0;      /* 書き始め */
+    opacity: 0;
+    transform: translateX(0);
+  }
+  15% {
+    width: 14px;   /* 書き終わり */
+    opacity: 1;
+    transform: translateX(0);
+  }
+  60% {
+    width: 14px;   /* 表示したまま (line-4 も書き終わった状態が合流する) */
+    opacity: 1;
+    transform: translateX(0);
+  }
+  70% {
+    /* スライドアウトの開始 (右方向へ移動) */
+    transform: translateX(70%);
+    opacity: 1;
+  }
+  80% {
+    /* さらにスライドしながら薄くする */
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    /* 位置・幅をリセットして次のサイクルへ */
+    width: 0;
+    transform: translateX(0);
+    opacity: 0;
+  }
+}

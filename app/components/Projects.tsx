@@ -34,10 +34,10 @@ const Projects = () => {
   return (
     <section id="projects" className="py-20 bg-white">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center text-[#3674B5]">Featured Projects</h2>
+        <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center text-[#453F3C] ">Featured Projects</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project) => (
-            <Card key={project.title} className="overflow-hidden">
+            <Card key={project.title} className="overflow-hidden bg-card">
               <Image
                 src={project.image || "/placeholder.svg"}
                 alt={project.title}
@@ -46,25 +46,33 @@ const Projects = () => {
                 className="w-full h-48 object-cover"
               />
               <CardHeader>
-                <CardTitle>{project.title}</CardTitle>
-                <CardDescription>{project.description}</CardDescription>
+                <CardTitle className="text-foreground">{project.title}</CardTitle>
+                <CardDescription className="text-muted-foreground">{project.description}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {project.technologies.map((tech) => (
-                    <Badge key={tech} variant="secondary">
+                    <Badge key={tech} variant="secondary" className="bg-secondary text-secondary-foreground">
                       {tech}
                     </Badge>
                   ))}
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button asChild variant="outline">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                >
                   <a href={project.demoLink} target="_blank" rel="noopener noreferrer">
                     Live Demo
                   </a>
                 </Button>
-                <Button asChild variant="outline">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                >
                   <a href={project.githubLink} target="_blank" rel="noopener noreferrer">
                     GitHub
                   </a>

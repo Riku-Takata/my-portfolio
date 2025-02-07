@@ -11,15 +11,15 @@ const skills = [
 
 const Skills = () => {
   return (
-    <section id="skills" className="py-20 bg-[#578FCA]">
+    <section id="skills" className="py-20 bg-card">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center text-white">Skills & Expertise</h2>
+        <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center text-[#453F3C] ">Skills & Expertise</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {skills.map((skill) => (
-            <div key={skill.name} className="bg-white p-4 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2">{skill.name}</h3>
-              <Progress value={skill.level} className="h-2 bg-gray-300" />
-              <span className="text-sm text-gray-600">{skill.level}%</span>
+            <div key={skill.name} className="bg-background p-4 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2 text-foreground">{skill.name}</h3>
+              <Progress value={skill.level} className="h-2 bg-secondary" />
+              <span className="text-sm text-muted-foreground">{skill.level}%</span>
             </div>
           ))}
         </div>

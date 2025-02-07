@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+// import Image from "next/image"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -30,21 +31,25 @@ const Header = () => {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "bg-[#3674B5] shadow-md" : "bg-[#3674B5] shadow-lg"}`}
+      className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "bg-card shadow-md" : "bg-card shadow-lg"}`}
     >
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center space-x-2">
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-[#A1E3F9]">
-            <path d="M12 2L1 21h22L12 2zm0 3.516L20.297 19H3.703L12 5.516z" />
-          </svg>
-          <span className="text-2xl font-bold text-white">YourName</span>
+          {/* <Image
+            src="/naptop.jpg?height=300&width=300"
+            alt="Your Name"
+            width={30}
+            height={30}
+            className="rounded-full mx-auto"
+          /> */}
+          <span className="text-2xl font-bold text-primary">Portfolio</span>
         </Link>
         <nav className="hidden md:flex space-x-6">
           {["about", "skills", "projects", "contact"].map((section) => (
             <Button
               key={section}
               variant="ghost"
-              className="text-white hover:text-[#3674B5] capitalize"
+              className="text-primary hover:text-white capitalize"
               onClick={() => scrollToSection(section)}
             >
               {section}
@@ -56,12 +61,12 @@ const Header = () => {
         </Button>
       </div>
       {isMenuOpen && (
-        <nav className="md:hidden bg-[#578FCA] p-4">
+        <nav className="md:hidden bg-card p-4">
           {["about", "skills", "projects", "contact"].map((section) => (
             <Button
               key={section}
               variant="ghost"
-              className="block w-full text-left text-white hover:text-[#3674B5] capitalize py-2"
+              className="block w-full text-left text-primary hover:text-white capitalize py-2"
               onClick={() => scrollToSection(section)}
             >
               {section}
