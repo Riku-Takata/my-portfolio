@@ -86,7 +86,8 @@ const Projects = () => {
 
   return (
     <section className="py-20 bg-white">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+      <h2 className="text-center text-3xl lg:text-4xl font-bold mb-6 text-[#453F3C]">Featured Projects</h2>
+      <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-gray-100 p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-4">GitHub Contributions</h2>
           {contributions ? (
@@ -103,9 +104,8 @@ const Projects = () => {
             <p>Loading contributions...</p>
           )}
         </div>
-        <div>
-          <h2 className="text-xl font-bold mb-4 text-center">Featured Projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="">
+          <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
             {repos.map((repo) => (
               <Card key={repo.id} className="overflow-hidden">
                 <CardHeader>
@@ -123,13 +123,16 @@ const Projects = () => {
                 </CardContent>
               </Card>
             ))}
-          </div>
-          <div className="mt-6 text-center">
-            <Button asChild>
-              <a href={`https://github.com/${GITHUB_USERNAME}?tab=repositories`} target="_blank" rel="noopener noreferrer">
-                View All
-              </a>
-            </Button>
+            <Card>
+              <CardHeader>
+                <CardTitle></CardTitle>
+              </CardHeader>
+              <CardContent>
+                <a href={`https://github.com/${GITHUB_USERNAME}?tab=repositories`} target="_blank" rel="noopener noreferrer">
+                  View All
+                </a>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
