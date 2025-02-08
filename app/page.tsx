@@ -63,6 +63,14 @@ export default function Home() {
     }
   }, [showWelcome])
 
+  // 横スクロールを防ぐために `body` に `overflow-x-hidden` を適用
+  useEffect(() => {
+    document.body.style.overflowX = "hidden"
+    return () => {
+      document.body.style.overflowX = "auto"
+    }
+  }, [])
+
   // ローディング中は何も表示しない (ちらつき防止)
   if (loading) {
     return null
@@ -79,9 +87,9 @@ export default function Home() {
 
   // それ以外は通常の Home ページを表示
   return (
-    <div className="min-h-screen bg-[#D1F8EF]">
+    <div className="min-h-screen overflow-x-hidden bg-[#D1F8EF]">
       <Header />
-      <main>
+      <main className="overflow-x-hidden">
         <ZennArticles />
         <Hero />
         <About />
