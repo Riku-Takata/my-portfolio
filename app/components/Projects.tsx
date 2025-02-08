@@ -1,12 +1,13 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import Loader from "./Loader";
 
 interface ContributionDay {
   date: string;
@@ -27,32 +28,44 @@ interface Project {
 }
 
 const getContributionData = async (period: string): Promise<ContributionDay[]> => {
-  const response = await fetch(`/api/contributions?period=${period}`)
+  const response = await fetch(`/api/contributions?period=${period}`);
   if (!response.ok) {
-    throw new Error("Failed to fetch contributions")
+    throw new Error("Failed to fetch contributions");
   }
-  return response.json()
-}
+  return response.json();
+};
 
 const getProjects = async (): Promise<Project[]> => {
-  const response = await fetch(`/api/projects`)
+  const response = await fetch(`/api/projects`);
   if (!response.ok) {
-    throw new Error("Failed to fetch projects")
+    throw new Error("Failed to fetch projects");
   }
-  return response.json()
-}
+  return response.json();
+};
 
 const Projects = () => {
-  const [period, setPeriod] = useState("month")
-  const [contributionData, setContributionData] = useState<ContributionDay[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
+  const [period, setPeriod] = useState("month");
+  const [contributionData, setContributionData] = useState<ContributionDay[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(false); // ローディング状態の追加
 
   useEffect(() => {
-    getContributionData(period).then(setContributionData).catch(console.error)
-    getProjects().then(setProjects).catch(console.error)
-  }, [period])
+    setLoading(true);
+    getContributionData(period)
+      .then((data) => {
+        setContributionData(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setLoading(false);
+      });
 
-  const totalContributions = contributionData.reduce((sum, day) => sum + day.contributionCount, 0)
+    // プロジェクトデータは period 変更に依存しない場合、初回のみ取得する方法も検討できます
+    getProjects().then(setProjects).catch(console.error);
+  }, [period]);
+
+  const totalContributions = contributionData.reduce((sum, day) => sum + day.contributionCount, 0);
 
   return (
     <section id="projects" className="py-20 bg-white">
@@ -65,7 +78,7 @@ const Projects = () => {
               <CardDescription>Total contributions in selected period: {totalContributions}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="month" value={period} onValueChange={setPeriod} className="mb-4">
+              <Tabs defaultValue="month" value={period} onValueChange={setPeriod} className="mb-16">
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="month">Month</TabsTrigger>
                   <TabsTrigger value="3months">3 Months</TabsTrigger>
@@ -74,17 +87,23 @@ const Projects = () => {
                 </TabsList>
               </Tabs>
               <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={contributionData}>
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={(date) => date.slice(5).replace("-", "/")}
-                      interval={period === "year" ? 30 : period === "6months" ? 15 : 7}
-                    />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="contributionCount" stroke="#E07B39" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {loading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader />
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={contributionData}>
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(date) => date.slice(5).replace("-", "/")}
+                        interval={period === "year" ? 30 : period === "6months" ? 15 : 7}
+                      />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="contributionCount" stroke="#E07B39" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -114,14 +133,8 @@ const Projects = () => {
                   </CardHeader>
                   <CardFooter className="p-4 pt-0">
                     <div className="flex flex-wrap gap-2">
-                      {project.languages.nodes
-                        .slice(0, 4)
-                        .map((tech) => (
-                        <Badge
-                          key={tech.name}
-                          variant="secondary"
-                          className="bg-secondary/50 text-secondary-foreground text-xs"
-                        >
+                      {project.languages.nodes.slice(0, 4).map((tech) => (
+                        <Badge key={tech.name} variant="secondary" className="bg-secondary/50 text-secondary-foreground text-xs">
                           {tech.name}
                         </Badge>
                       ))}
@@ -144,7 +157,7 @@ const Projects = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Projects
+export default Projects;
