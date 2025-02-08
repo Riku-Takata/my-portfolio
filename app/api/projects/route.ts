@@ -35,7 +35,7 @@ export async function GET() {
           url
           isPrivate
           stargazerCount
-          languages(first: 5) {
+          languages(first: 10) {
             nodes {
               name
             }

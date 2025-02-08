@@ -58,7 +58,7 @@ export async function GET() {
         level: Math.round((bytes / totalBytes) * 100),
       }))
       .sort((a, b) => b.level - a.level)
-      .slice(0, 5);
+      .slice(0, 10);
 
     return NextResponse.json(skillsData, { status: 200 });
   } catch (error) {

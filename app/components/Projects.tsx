@@ -76,7 +76,11 @@ const Projects = () => {
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={contributionData}>
-                    <XAxis dataKey="date" tickFormatter={(date) => date.slice(5)} interval={period === "year" ? 30 : 7} />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(date) => date.slice(5).replace("-", "/")}
+                      interval={period === "year" ? 30 : period === "6months" ? 15 : 7}
+                    />
                     <Tooltip />
                     <Line type="monotone" dataKey="contributionCount" stroke="#E07B39" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                   </LineChart>
@@ -110,7 +114,9 @@ const Projects = () => {
                   </CardHeader>
                   <CardFooter className="p-4 pt-0">
                     <div className="flex flex-wrap gap-2">
-                      {project.languages.nodes.map((tech) => (
+                      {project.languages.nodes
+                        .slice(0, 4)
+                        .map((tech) => (
                         <Badge
                           key={tech.name}
                           variant="secondary"
@@ -119,7 +125,7 @@ const Projects = () => {
                           {tech.name}
                         </Badge>
                       ))}
-                      {project.languages.nodes.length > 2 && (
+                      {project.languages.nodes.length > 4 && (
                         <Badge variant="secondary" className="bg-secondary/50 text-secondary-foreground text-xs">
                           +{project.languages.nodes.length - 2}
                         </Badge>
@@ -130,7 +136,7 @@ const Projects = () => {
               ))}
               <Card className="flex items-center justify-center bg-card/50 border-dashed">
                 <Button variant="ghost" className="text-primary hover:text-primary/90 hover:bg-primary/10" asChild>
-                  <a href="#all-projects">View All Projects →</a>
+                  <a href="https://github.com/Riku-Takata">View All Projects →</a>
                 </Button>
               </Card>
             </div>
