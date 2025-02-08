@@ -1,143 +1,144 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+"use client"
 
-const GITHUB_USERNAME = process.env.NEXT_PUBLIC_GITHUB_USERNAME || "";
-const GITHUB_GRAPHQL_API = process.env.NEXT_PUBLIC_GITHUB_GRAPHQL_API || "";
-const GITHUB_TOKEN = process.env.NEXT_PUBLIC_GITHUB_TOKEN || "";
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts"
+import Image from "next/image"
+import { Button } from "@/components/ui/button"
 
-interface Repo {
-  id: string;
+interface ContributionDay {
+  date: string;
+  contributionCount: number;
+}
+
+interface Language {
+  name: string;
+}
+
+interface Project {
   name: string;
   description?: string;
   url: string;
+  contributions: number;
+  image?: string;
+  languages: { nodes: Language[] };
 }
 
-interface ContributionDay {
-  contributionCount: number;
-  date: string;
+const getContributionData = async (period: string): Promise<ContributionDay[]> => {
+  const response = await fetch(`/api/contributions?period=${period}`)
+  if (!response.ok) {
+    throw new Error("Failed to fetch contributions")
+  }
+  return response.json()
 }
 
-interface ContributionWeek {
-  contributionDays: ContributionDay[];
-}
-
-interface ContributionCalendar {
-  totalContributions: number;
-  weeks: ContributionWeek[];
+const getProjects = async (): Promise<Project[]> => {
+  const response = await fetch(`/api/projects`)
+  if (!response.ok) {
+    throw new Error("Failed to fetch projects")
+  }
+  return response.json()
 }
 
 const Projects = () => {
-  const [repos, setRepos] = useState<Repo[]>([]);
-  const [contributions, setContributions] = useState<ContributionCalendar | null>(null);
+  const [period, setPeriod] = useState("month")
+  const [contributionData, setContributionData] = useState<ContributionDay[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
 
   useEffect(() => {
-    if (!GITHUB_GRAPHQL_API || !GITHUB_TOKEN) {
-      console.error("GitHub API URL or Token is missing.");
-      return;
-    }
-    
-    fetch(GITHUB_GRAPHQL_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
-      },
-      body: JSON.stringify({
-        query: `{
-          viewer {
-            repositories(first: 3, orderBy: {field: UPDATED_AT, direction: DESC}) {
-              nodes {
-                id
-                name
-                description
-                url
-              }
-            }
-            contributionsCollection {
-              contributionCalendar {
-                totalContributions
-                weeks {
-                  contributionDays {
-                    contributionCount
-                    date
-                  }
-                }
-              }
-            }
-          }
-        }`,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.data?.viewer?.repositories?.nodes) {
-          setRepos(data.data.viewer.repositories.nodes);
-        }
-        if (data.data?.viewer?.contributionsCollection?.contributionCalendar) {
-          const calendar = data.data.viewer.contributionsCollection.contributionCalendar;
-          const days = calendar.weeks.flatMap((week: ContributionWeek) => week.contributionDays);
-          setContributions({ totalContributions: calendar.totalContributions, weeks: [{ contributionDays: days }] });
-        }
-      })
-      .catch((error) => console.error("Failed to fetch data:", error));
-  }, []);
+    getContributionData(period).then(setContributionData).catch(console.error)
+    getProjects().then(setProjects).catch(console.error)
+  }, [period])
+
+  const totalContributions = contributionData.reduce((sum, day) => sum + day.contributionCount, 0)
 
   return (
-    <section className="py-20 bg-white">
-      <h2 className="text-center text-3xl lg:text-4xl font-bold mb-6 text-[#453F3C]">Featured Projects</h2>
-      <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-gray-100 p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">GitHub Contributions</h2>
-          {contributions ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={contributions.weeks[0].contributionDays}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tickFormatter={(date) => date.slice(5)} />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="contributionCount" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <p>Loading contributions...</p>
-          )}
-        </div>
-        <div className="">
-          <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {repos.map((repo) => (
-              <Card key={repo.id} className="overflow-hidden">
-                <CardHeader>
-                  <CardTitle>{repo.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{repo.description || "No description available"}</p>
-                  <div className="mt-4 flex justify-between">
-                    <Button asChild variant="outline">
-                      <a href={repo.url} target="_blank" rel="noopener noreferrer">
-                        View on GitHub
-                      </a>
-                    </Button>
-                  </div>
-                </CardContent>
+    <section id="projects" className="py-20 bg-background">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-primary">Featured Projects</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold">GitHub Contributions</CardTitle>
+              <CardDescription>Total contributions in selected period: {totalContributions}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="month" value={period} onValueChange={setPeriod} className="mb-4">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="month">Month</TabsTrigger>
+                  <TabsTrigger value="3months">3 Months</TabsTrigger>
+                  <TabsTrigger value="6months">6 Months</TabsTrigger>
+                  <TabsTrigger value="year">Year</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={contributionData}>
+                    <XAxis dataKey="date" tickFormatter={(date) => date.slice(5)} interval={period === "year" ? 30 : 7} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="contributionCount" stroke="#E07B39" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          {/* Right Column - Projects Gallery */}
+          <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {projects.map((project) => (
+                <Card key={project.name} className="overflow-hidden bg-card">
+                  {project.image === "No Image Available" ? (
+                    <div className="w-full h-40 flex items-center justify-center bg-gray-200 text-gray-500">
+                      No Image Available
+                    </div>
+                  ) : (
+                    <Image
+                      src={project.image || "/placeholder.svg"}
+                      alt={project.name}
+                      width={300}
+                      height={200}
+                      className="w-full h-40 object-cover"
+                    />
+                  )}
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-lg text-foreground">{project.name}</CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+                      {project.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter className="p-4 pt-0">
+                    <div className="flex flex-wrap gap-2">
+                      {project.languages.nodes.map((tech) => (
+                        <Badge
+                          key={tech.name}
+                          variant="secondary"
+                          className="bg-secondary/50 text-secondary-foreground text-xs"
+                        >
+                          {tech.name}
+                        </Badge>
+                      ))}
+                      {project.languages.nodes.length > 2 && (
+                        <Badge variant="secondary" className="bg-secondary/50 text-secondary-foreground text-xs">
+                          +{project.languages.nodes.length - 2}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))}
+              <Card className="flex items-center justify-center bg-card/50 border-dashed">
+                <Button variant="ghost" className="text-primary hover:text-primary/90 hover:bg-primary/10" asChild>
+                  <a href="#all-projects">View All Projects →</a>
+                </Button>
               </Card>
-            ))}
-            <Card>
-              <CardHeader>
-                <CardTitle></CardTitle>
-              </CardHeader>
-              <CardContent>
-                <a href={`https://github.com/${GITHUB_USERNAME}?tab=repositories`} target="_blank" rel="noopener noreferrer">
-                  View All
-                </a>
-              </CardContent>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default Projects;
+export default Projects

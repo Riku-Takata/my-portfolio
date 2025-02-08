@@ -1,74 +1,40 @@
+"use client"
+
 import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
 
-const GITHUB_USERNAME = process.env.NEXT_PUBLIC_GITHUB_USERNAME;
-const GITHUB_TOKEN = process.env.NEXT_PUBLIC_GITHUB_TOKEN; // GitHub トークン
-const GITHUB_API_URL = `https://api.github.com/users/${GITHUB_USERNAME}/repos`;
+interface Skill {
+  name: string;
+  level: number;
+}
 
 const Skills = () => {
-  const [skills, setSkills] = useState<{ name: string; level: number }[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchGitHubLanguages = async () => {
+    const fetchSkills = async () => {
       try {
-        const response = await fetch(GITHUB_API_URL, {
-          headers: {
-            Authorization: `token ${GITHUB_TOKEN}`, // 認証ヘッダーを追加
-          },
-        });
-        if (!response.ok) throw new Error(`GitHub API Error: ${response.statusText}`);
-        const repos = await response.json();
-
-        const languageStats: Record<string, number> = {};
-        let totalBytes = 0;
-
-        for (const repo of repos) {
-          if (!repo.fork && repo.languages_url) {
-            try {
-              const langResponse = await fetch(repo.languages_url, {
-                headers: {
-                  Authorization: `token ${GITHUB_TOKEN}`, // 各リポジトリの言語データ取得にも認証
-                },
-              });
-              if (!langResponse.ok) throw new Error(`Languages API Error: ${langResponse.statusText}`);
-              const langData = await langResponse.json();
-
-              for (const [lang, bytes] of Object.entries(langData) as [string, number][]) {
-                languageStats[lang] = (languageStats[lang] || 0) + bytes;
-                totalBytes += bytes;
-              }
-            } catch (langError) {
-              console.warn(`Failed to fetch languages for repo: ${repo.name}`, langError);
-            }
-          }
+        const response = await fetch("/api/skills");
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.statusText}`);
         }
-
-        if (totalBytes === 0) throw new Error("No language data found");
-
-        const skillsData = Object.entries(languageStats)
-          .map(([name, bytes]) => ({
-            name,
-            level: Math.round((bytes / totalBytes) * 100),
-          }))
-          .sort((a, b) => b.level - a.level)
-          .slice(0, 5);
-
-        setSkills(skillsData);
+        const data: Skill[] = await response.json();
+        setSkills(data);
         setError(null);
-      } catch (error) {
-        console.error("GitHub API の取得に失敗しました:", error);
+      } catch (err) {
+        console.error("GitHub API の取得に失敗しました:", err);
       }
     };
 
-    fetchGitHubLanguages();
+    fetchSkills();
   }, []);
 
   return (
     <section id="skills" className="py-20 bg-card flex justify-center">
       <div className="container mx-auto px-4 flex flex-col lg:flex-row items-center justify-center text-center">
-        <div className="flex flex-col justify-center lg:w-1/2 w-full mb-10 lg:mb-0 items-center">
+        <div className="flex flex-col justify-center lg:w-2/3 w-full mb-10 lg:mb-0 items-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-10 text-center text-[#453F3C]">
             Skills & Expertise(from GitHub)
           </h2>
@@ -90,7 +56,7 @@ const Skills = () => {
           )}
         </div>
 
-        <div className="flex items-center justify-center lg:w-1/2 w-full max-w-md">
+        <div className="flex items-center justify-center lg:w-1/3 w-full max-w-md">
           <ResponsiveContainer width="100%" height={400}>
             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skills}>
               <PolarGrid />
