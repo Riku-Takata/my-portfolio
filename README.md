@@ -1,3 +1,5 @@
+<img width="1907" alt="スクリーンショット 2025-02-08 11 50 32" src="https://github.com/user-attachments/assets/609db646-a769-4cc2-ad31-e61a6a333a45" />
+
 # ポートフォリオサイト
 
 ## 概要
