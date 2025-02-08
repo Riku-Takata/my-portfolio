@@ -99,3 +99,37 @@
   opacity: 0;
   animation-fill-mode: forwards;
 }
+
+.deskSvg {
+  width: 100%;
+  max-width: 512px;
+  height: auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* SMOKE */
+.deskSvg #smoke-1 {
+  stroke-dasharray: 0, 10;
+  animation: smoke 6s ease infinite;
+}
+
+.deskSvg #smoke-2 {
+  stroke-dasharray: 0, 10;
+  animation: smoke 6s 0.5s ease infinite;
+}
+
+@keyframes smoke {
+  0% {
+    stroke-dasharray: 0, 10;
+    opacity: 1;
+  }
+  50% {
+    stroke-dasharray: 10, 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dasharray: 10, 0;
+    opacity: 0;
+  }
+}

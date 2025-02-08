@@ -4,7 +4,7 @@ import DeskAnimation from "./DeskAnimation"
 
 const Hero = () => {
   return (
-    <section className="bg-card text-primary-foreground py-16 lg:py-28">
+    <section className="bg-card text-primary-foreground py-20 lg:py-32">
       <div className="container mx-auto px-20">
         <div className="flex flex-col lg:flex-row items-center justify-between">
           <div className="lg:w-2/3 text-center lg:text-left mb-8 lg:mb-0">
