@@ -110,8 +110,15 @@ const Projects = () => {
           {/* Right Column - Projects Gallery */}
           <div className="lg:col-span-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {projects.map((project) => (
-                <Card key={project.name} className="overflow-hidden bg-card">
+            {projects.map((project) => (
+              <a
+                key={project.name}
+                href={project.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block h-full" // アンカー自体も高さを100%に
+              >
+                <Card className="flex flex-col h-full overflow-hidden bg-card hover:shadow-lg transition-shadow duration-200">
                   {project.image === "No Image Available" ? (
                     <div className="w-full h-40 flex items-center justify-center bg-gray-200 text-gray-500">
                       No Image Available
@@ -125,33 +132,41 @@ const Projects = () => {
                       className="w-full h-40 object-cover"
                     />
                   )}
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg text-foreground">{project.name}</CardTitle>
-                    <CardDescription className="text-sm text-muted-foreground line-clamp-2">
-                      {project.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter className="p-4 pt-0">
-                    <div className="flex flex-wrap gap-2">
-                      {project.languages.nodes.slice(0, 4).map((tech) => (
-                        <Badge key={tech.name} variant="secondary" className="bg-secondary/50 text-secondary-foreground text-xs">
-                          {tech.name}
-                        </Badge>
-                      ))}
-                      {project.languages.nodes.length > 4 && (
-                        <Badge variant="secondary" className="bg-secondary/50 text-secondary-foreground text-xs">
-                          +{project.languages.nodes.length - 2}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardFooter>
+                  {/* テキスト部分を flex コンテナでラップ */}
+                  <div className="flex flex-col flex-1">
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-lg text-foreground">{project.name}</CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+                        {project.description || <span className="invisible">Placeholder</span>}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter className="p-4 pt-0">
+                      <div className="flex flex-wrap gap-2">
+                        {project.languages.nodes.slice(0, 4).map((tech) => (
+                          <Badge
+                            key={tech.name}
+                            variant="secondary"
+                            className="bg-secondary/50 text-secondary-foreground text-xs"
+                          >
+                            {tech.name}
+                          </Badge>
+                        ))}
+                        {project.languages.nodes.length > 4 && (
+                          <Badge variant="secondary" className="bg-secondary/50 text-secondary-foreground text-xs">
+                            +{project.languages.nodes.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardFooter>
+                  </div>
                 </Card>
-              ))}
-              <Card className="flex items-center justify-center bg-card/50 border-dashed">
-                <Button variant="ghost" className="text-primary hover:text-primary/90 hover:bg-primary/10" asChild>
-                  <a href="https://github.com/Riku-Takata">View All Projects →</a>
-                </Button>
-              </Card>
+              </a>
+            ))}
+            <Card className="flex items-center justify-center bg-card/50 border-dashed">
+              <Button variant="ghost" className="text-primary hover:text-primary/90 hover:bg-primary/10" asChild>
+                <a href="https://github.com/Riku-Takata">View All Projects →</a>
+              </Button>
+            </Card>
             </div>
           </div>
         </div>
