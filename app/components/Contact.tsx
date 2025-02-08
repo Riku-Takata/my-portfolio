@@ -1,40 +1,72 @@
 "use client"
 
-import { Github, Mail, Twitter } from "lucide-react"
-import type React from "react" // Added import for React
+import { useState } from "react"
+import { motion } from "framer-motion"
+import { FaEnvelope, FaGithub, FaXTwitter } from "react-icons/fa6"
+import { ExternalLink } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
+const contactMethods = [
+  {
+    name: "Email",
+    icon: FaEnvelope,
+    value: "RikuChestnut66@gmail.com",
+    href: "mailto:RikuChestnut66@gmail.com",
+  },
+  {
+    name: "GitHub",
+    icon: FaGithub,
+    value: "Riku-Takata",
+    href: "https://github.com/Riku-Takata",
+  },
+  {
+    name: "X",
+    icon: FaXTwitter,
+    value: "RIKU TAKATA",
+    href: "https://x.com/tk1_zansin",
+  },
+]
 
 const Contact = () => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+
   return (
     <section id="contact" className="py-20 bg-card">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center text-[#453F3C] ">Get In Touch</h2>
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="md:w-1/2 flex flex-col justify-center items-center md:items-start space-y-4">
-            <a
-              href="mailto:your.email@example.com"
-              className="flex items-center space-x-2 text-[#453F3C] hover:text-[#726d6a] "
-            >
-              <Mail size={24} />
-              <span>your.email@example.com</span>
-            </a>
-            <a
-              href="https://github.com/yourusername"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-[#453F3C] hover:text-[#726d6a] "
-            >
-              <Github size={24} />
-              <span>GitHub</span>
-            </a>
-            <a
-              href="https://linkedin.com/in/yourusername"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-[#453F3C] hover:text-[#726d6a] "
-            >
-              <Twitter size={24} />
-              <span>X</span>
-            </a>
+        <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center text-primary">Contact</h2>
+        <div className="max-w-3xl mx-auto">
+          <p className="text-center text-lg mb-12 text-muted-foreground">
+            常に新しいチャレンジや面白いことに取り組みたいと思っています！<br />
+            ご連絡は以下のいずれかの方法でお気軽にご連絡ください。<br />
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {contactMethods.map((method, index) => (
+              <motion.div
+                key={method.name}
+                className="relative"
+                onHoverStart={() => setHoveredIndex(index)}
+                onHoverEnd={() => setHoveredIndex(null)}
+              >
+                <motion.div
+                  className="absolute inset-0 bg-primary/10 rounded-lg"
+                  initial={false}
+                  animate={{
+                    scale: hoveredIndex === index ? 1.05 : 1,
+                  }}
+                  transition={{ duration: 0.3 }}
+                />
+                <div className="relative z-10 flex flex-col items-center p-6 bg-background rounded-lg shadow-lg bg-white">
+                  <method.icon className="w-12 h-12 text-primary mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">{method.name}</h3>
+                  <p className="text-sm text-muted-foreground text-center mb-4">{method.value}</p>
+                  <Button asChild variant="outline" size="sm">
+                    <a href={method.href} target="_blank" rel="noopener noreferrer" className="flex bg-white items-center text-primary border-primary hover:border-secondary">
+                      Connect <ExternalLink className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>
@@ -43,4 +75,3 @@ const Contact = () => {
 }
 
 export default Contact
-
