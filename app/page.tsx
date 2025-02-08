@@ -9,6 +9,7 @@ import Projects from "./components/Projects"
 import Contact from "./components/Contact"
 import Footer from "./components/Footer"
 import WelcomePage from "./components/welcome/page"
+import ZennArticles from "./components/ZennArticles"
 
 export default function Home() {
   // Welcome ページを表示するかどうかのフラグ
@@ -81,6 +82,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#D1F8EF]">
       <Header />
       <main>
+        <ZennArticles />
         <Hero />
         <About />
         <Skills />
