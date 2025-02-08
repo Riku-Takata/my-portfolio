@@ -56,7 +56,7 @@ const Header = () => {
             </Button>
           ))}
         </nav>
-        <Button variant="ghost" size="icon" className="md:hidden text-white" onClick={toggleMenu}>
+        <Button variant="ghost" size="icon" className="md:hidden text-primary" onClick={toggleMenu}>
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </Button>
       </div>
