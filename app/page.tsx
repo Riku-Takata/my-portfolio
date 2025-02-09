@@ -11,6 +11,7 @@ import Footer from "./components/Footer"
 import WelcomePage from "./components/welcome/page"
 import ZennArticles from "./components/ZennArticles"
 
+
 export default function Home() {
   // Welcome ページを表示するかどうかのフラグ
   const [showWelcome, setShowWelcome] = useState(false)
@@ -77,7 +78,7 @@ export default function Home() {
   }
 
   // Welcome ページを表示するフラグが true のときは WelcomePage を描画
-  if (showWelcome) {
+  if (showWelcome && window.innerWidth > 768) {
     return (
       <div className="h-screen overflow-hidden">
         <WelcomePage />
