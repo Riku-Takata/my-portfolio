@@ -12,7 +12,7 @@ const DeskAnimation: React.FC = () => {
     const codeElement = codeRef.current
     if (!codeElement) return
 
-    const text = `const greet = () => {\n  console.log(\n    \"Welcome to portfolio\" \n  );\n}\nexport default greet`
+    const text = ` const greet = () => {\n   console.log(\n    \"Welcome to portfolio\" \n   );\n }\n export default greet`
     let index = 0
 
     function typeText() {
