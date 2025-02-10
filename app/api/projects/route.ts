@@ -28,7 +28,7 @@ async function fetchGitHubData(query: string) {
 export async function GET() {
   const query = `{
     viewer {
-      repositories(first: 5, orderBy: { field: PUSHED_AT, direction: DESC }) {
+      repositories(first: 5, orderBy: { field: STARGAZERS, direction: DESC }) {
         nodes {
           name
           description
