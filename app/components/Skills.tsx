@@ -20,21 +20,21 @@ interface SkillTimeline {
 // スキルの時系列データ
 const timelineData: SkillTimeline[] = [
   {
-    year: "2022",
+    year: "2023",
     title: "プログラミングとの出会い",
     description: "大学でプログラミングを始め、WebアプリケーションとJavaScriptに興味を持つ",
     icon: "/placeholder.svg?height=80&width=80",
     skills: ["HTML", "CSS", "JavaScript"],
   },
   {
-    year: "2023",
+    year: "2024",
     title: "フロントエンド開発の探求",
     description: "ReactとTypeScriptを学び、モダンなWeb開発技術のキャッチアップを開始",
     icon: "/placeholder.svg?height=80&width=80",
     skills: ["React", "TypeScript", "Next.js"],
   },
   {
-    year: "2024",
+    year: "2025",
     title: "フルスタック開発への挑戦",
     description: "バックエンド技術とデータベースの学習を開始し、フルスタック開発に取り組む",
     icon: "/placeholder.svg?height=80&width=80",
