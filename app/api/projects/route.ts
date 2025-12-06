@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-static";
 
 const GITHUB_GRAPHQL_API = process.env.GITHUB_GRAPHQL_API || "https://api.github.com/graphql";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "";
