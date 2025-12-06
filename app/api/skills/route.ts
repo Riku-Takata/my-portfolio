@@ -1,6 +1,5 @@
 // app/api/skills/route.ts
 import { NextResponse } from "next/server";
-export const dynamic = "force-static";
 
 const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // サーバー専用のトークン
