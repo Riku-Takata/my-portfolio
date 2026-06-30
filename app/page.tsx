@@ -4,8 +4,7 @@ import { useEffect, useState } from "react"
 import Header from "./components/Header"
 import Hero from "./components/Hero"
 import About from "./components/About"
-import Skills from "./components/Skills"
-import Projects from "./components/Projects"
+import Works from "./components/Works"
 import Contact from "./components/Contact"
 import Footer from "./components/Footer"
 import WelcomePage from "./components/welcome/page"
@@ -91,11 +90,10 @@ export default function Home() {
     <div className="min-h-screen overflow-x-hidden bg-[#D1F8EF]">
       <Header />
       <main className="overflow-x-hidden">
-        <ZennArticles />
         <Hero />
         <About />
-        <Skills />
-        <Projects />
+        <Works />
+        <ZennArticles />
         <Contact />
       </main>
       <Footer />
