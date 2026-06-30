@@ -302,15 +302,47 @@
 }
 
 /* =========================================================
-   3D STACKED CARD SLIDER  (Zenn — framer-motion driven)
+   3D ROTATING CARD CAROUSEL  (Zenn — pure-css cylinder)
    ========================================================= */
-.zen-stage {
-  position: relative;
+.zen-scene {
+  display: grid;
+  place-items: center;
   width: 100%;
-  height: 460px;
-  perspective: 900px;
-  perspective-origin: 50% 50%;
+  height: 30em;
+  overflow: hidden;
+  perspective: 40em;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 16% 84%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 16% 84%, transparent);
 }
+
+.zen-ring {
+  display: grid;
+  place-self: center;
+  transform-style: preserve-3d;
+  animation: zen-spin 40s linear infinite;
+}
+
+.zen-ring:hover {
+  animation-play-state: paused;
+}
+
+@keyframes zen-spin {
+  to { transform: rotateY(-360deg); }
+}
+
+.zen-card {
+  grid-area: 1 / 1; /* 全カードを同じセルに重ねる */
+  aspect-ratio: 7 / 10;
+  border-radius: 1.25em;
+  overflow: hidden;
+  backface-visibility: hidden;
+  box-shadow: 0 22px 44px -18px rgba(69, 63, 60, 0.5);
+}
+
 @media (max-width: 640px) {
-  .zen-stage { height: 380px; }
+  .zen-scene { height: 23em; perspective: 30em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zen-ring { animation-duration: 160s; }
 }
