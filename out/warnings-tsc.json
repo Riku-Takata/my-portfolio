@@ -1,0 +1,9 @@
+{
+  "tool": "tsc",
+  "base": "80a5b8076d47ad0ed11992e1d911744565878ba9",
+  "baseline_total": 455,
+  "head_total": 0,
+  "new_count": 0,
+  "new": [],
+  "pass": true
+}

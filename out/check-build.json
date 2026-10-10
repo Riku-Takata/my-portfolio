@@ -1,0 +1,29 @@
+{
+  "name": "build",
+  "command": "npm run build",
+  "exit_code": 0,
+  "pass": true,
+  "tail": [
+    "> portfolio@0.1.0 build",
+    "> astro build",
+    "",
+    "15:47:08 [types] Generated 27ms",
+    "15:47:08 [build] output: \"static\"",
+    "15:47:08 [build] mode: \"static\"",
+    "15:47:08 [build] directory: /Users/riku/Documents/0_Privates/claude-code-setup/runs/R-20261010-152248-5a3c/work/dist/",
+    "15:47:08 [build] Collecting build info...",
+    "15:47:08 [build] ✓ Completed in 57ms.",
+    "15:47:08 [build] Building static entrypoints...",
+    "15:47:09 [vite] ✓ built in 98ms",
+    "15:47:09 [vite] ✓ built in 13ms",
+    "15:47:09 [build] Rearranging server assets...",
+    "",
+    " generating static routes ",
+    "15:47:09   ├─ /index.html (+11ms) ",
+    "15:47:09 ✓ Completed in 19ms.",
+    "",
+    "15:47:09 [build] ✓ Completed in 152ms.",
+    "15:47:09 [build] 1 page(s) built in 211ms",
+    "15:47:09 [build] Complete!"
+  ]
+}
