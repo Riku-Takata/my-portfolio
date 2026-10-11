@@ -1,11 +1,11 @@
-/docs/
-/README.md
-/package-lock.json
-/dist/
-/.astro/
-/node_modules/
-/.harness/
-/.claude/
+docs/
+README.md
+package-lock.json
+dist/
+.astro/
+node_modules/
+.harness/
+.claude/
 # 既存ファイルの整形し直しは T-01 の範囲外(AC-22)
 src/layouts/BaseLayout.astro
 src/pages/index.astro
