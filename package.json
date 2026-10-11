@@ -10,13 +10,28 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --project unit",
+    "test:dist": "vitest run --project dist",
+    "verify": "npm run check && npm run lint && npm run format:check && npm test && npm run build && npm run test:dist"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.10",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.8",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3"
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.12.0",
+    "eslint-plugin-astro": "^1.7.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
   }
 }
