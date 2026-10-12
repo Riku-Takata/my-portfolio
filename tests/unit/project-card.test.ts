@@ -12,7 +12,9 @@ let render: Render;
 
 beforeAll(async () => {
   const config = await getViteConfig({
-    server: { middlewareMode: true, hmr: false },
+    // components.test.ts の Vite サーバーと同時に動くので、依存の最適化キャッシュを分け、WebSocket も開かない
+    cacheDir: 'node_modules/.vite-project-card',
+    server: { middlewareMode: true, hmr: false, ws: false },
     appType: 'custom',
     logLevel: 'silent',
   })({ command: 'serve', mode: 'test' });
