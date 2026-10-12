@@ -6,6 +6,7 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import os from 'node:os';
@@ -332,6 +333,29 @@ describe('check-release', () => {
     root = await makeFixture();
     rmSync(path.join(root, 'src/assets/diagrams/x.svg'));
     rmSync(path.join(root, 'src/assets/diagrams/x.mmd'));
+    results = await runChecksWithDetails(root);
+    expect(statusOf(results, 'diagrams')).toBe('FAIL');
+  });
+
+  it('14b: シンボリックリンクの図と MDX も数える', async () => {
+    const root = await makeFixture();
+    const real = path.join(root, 'real');
+    const links = [
+      'src/assets/diagrams/x.mmd',
+      'src/assets/diagrams/x.svg',
+      'src/content/projects/a.mdx',
+    ];
+    for (const rel of links) {
+      const target = path.join(real, path.basename(rel));
+      mkdirSync(real, { recursive: true });
+      writeFileSync(target, readFileSync(path.join(root, rel)));
+      rmSync(path.join(root, rel));
+      symlinkSync(target, path.join(root, rel));
+    }
+    let results: Result[] = await runChecksWithDetails(root);
+    for (const r of results) expect(r.status).toBe('OK');
+
+    writeFileSync(path.join(real, 'x.mmd'), 'graph TD\nA-->B\n\n');
     results = await runChecksWithDetails(root);
     expect(statusOf(results, 'diagrams')).toBe('FAIL');
   });
