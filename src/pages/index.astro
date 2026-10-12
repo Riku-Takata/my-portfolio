@@ -5,7 +5,7 @@ import About from '../components/sections/About.astro';
 import { resume } from '../content/resume';
 ---
 <BaseLayout
-  title="高田 莉玖 (Riku Takata) | Portfolio"
+  title={`${resume.profile.nameJa} (${resume.profile.nameEn}) | Portfolio`}
   description={resume.profile.summary}
   ogImage="/og/index.png"
   type="website"
