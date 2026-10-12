@@ -10,8 +10,13 @@ import Mail from '../components/icons/Mail.astro';
 import FileText from '../components/icons/FileText.astro';
 import ArrowRight from '../components/icons/ArrowRight.astro';
 import ExternalLink from '../components/icons/ExternalLink.astro';
+import ProjectsList from '../components/sections/ProjectsList.astro';
+import { getCollection } from 'astro:content';
+import { selectFeatured } from '../lib/projects';
 import { SITE_NAME } from '../lib/site';
 import { resume } from '../content/resume';
+
+const featured = selectFeatured(await getCollection('projects'));
 ---
 <BaseLayout
   title="高田 莉玖 (Riku Takata) | Portfolio"
@@ -36,5 +41,6 @@ import { resume } from '../content/resume';
       <LinkButton href="#about"><ArrowRight />About</LinkButton>
       <p data-demo="icon-sized"><ArrowRight class="size-6" /></p>
     </Section>
+    <ProjectsList projects={featured} />
   </main>
 </BaseLayout>
