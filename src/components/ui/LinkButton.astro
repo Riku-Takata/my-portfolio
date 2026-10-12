@@ -1,0 +1,17 @@
+---
+interface Props {
+  href: string;
+}
+
+const { href } = Astro.props;
+const isExternal = /^https?:\/\//.test(href);
+---
+
+<a
+  href={href}
+  target={isExternal ? '_blank' : undefined}
+  rel={isExternal ? 'noopener noreferrer' : undefined}
+  class="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-sm text-indigo-600 transition-colors duration-150 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:border-zinc-800 dark:text-indigo-400"
+>
+  <slot />
+</a>
