@@ -166,7 +166,8 @@ describe('dist: フォント', () => {
     expect(preloads[0].has('crossorigin')).toBe(true);
     const href = preloads[0].get('href') ?? '';
     expect(existsSync(path.join(distDir, href))).toBe(true);
-    expect(woff2Urls('Geist Variable', true)).toEqual([href]);
+    // 同じ latin の @font-face が minify 後の CSS と /fonts/geist.css の両方にあるので、重複は除く
+    expect([...new Set(woff2Urls('Geist Variable', true))]).toEqual([href]);
   });
 
   it('JetBrains Mono を preload しない', () => {
