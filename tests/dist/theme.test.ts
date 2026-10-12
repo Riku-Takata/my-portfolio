@@ -117,10 +117,36 @@ describe('dist: フォント', () => {
     },
   );
 
+  // minify で U+0000-00FF が U+?? になるので、unicode-range は符号位置の範囲として読む
+  function unicodeRanges(block: string): [number, number][] {
+    const value = block.match(/unicode-range\s*:\s*([^;}]*)/i)?.[1] ?? '';
+    return value
+      .split(',')
+      .map((s) => s.trim().replace(/^U\+/i, ''))
+      .filter((s) => s !== '')
+      .map((s): [number, number] => {
+        if (s.includes('-')) {
+          const [lo, hi] = s.split('-');
+          return [parseInt(lo, 16), parseInt(hi, 16)];
+        }
+        if (s.includes('?')) {
+          return [
+            parseInt(s.replace(/\?/g, '0'), 16),
+            parseInt(s.replace(/\?/g, 'F'), 16),
+          ];
+        }
+        return [parseInt(s, 16), parseInt(s, 16)];
+      });
+  }
+
   function woff2Urls(family: string, latinOnly: boolean): string[] {
     return fontFaces
       .filter((f) => f.family.trim() === family)
-      .filter((f) => !latinOnly || /U\+0000-00FF/i.test(f.block))
+      .filter(
+        (f) =>
+          !latinOnly ||
+          unicodeRanges(f.block).some(([lo, hi]) => lo <= 0x0000 && hi >= 0x00ff),
+      )
       .flatMap((f) =>
         [...f.block.matchAll(/url\(\s*["']?([^"')]+\.woff2)["']?\s*\)/g)].map(
           (m) =>
