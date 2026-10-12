@@ -25,6 +25,13 @@ function listDirect(ext: string): string[] {
 
 const stem = (name: string) => name.slice(0, name.lastIndexOf('.'));
 
+// 対象の .mmd が1つもないまま通らないように、どのテストでも先に確かめる(AC-25)
+function listDiagrams(): { mmds: string[]; svgs: string[] } {
+  const mmds = listDirect('.mmd');
+  expect(mmds, `${dir} に .mmd がありません`).not.toEqual([]);
+  return { mmds, svgs: listDirect('.svg') };
+}
+
 describe('diagram hash functions', () => {
   const mmd = 'flowchart LR\n  A["前処理"] --> B["変位マップ"]\n';
   const svg = `<!-- source-sha256: ${computeSourceHash(mmd)} -->\n<svg></svg>\n`;
@@ -68,13 +75,12 @@ describe('diagram hash functions', () => {
 
 describe('src/assets/diagrams', () => {
   it('.mmd が1つ以上ある', () => {
-    const mmds = listDirect('.mmd');
+    const { mmds } = listDiagrams();
     expect(mmds.length, `${dir} に .mmd がありません`).toBeGreaterThan(0);
   });
 
   it('すべての .mmd に同じ名前の .svg がある', () => {
-    const mmds = listDirect('.mmd');
-    const svgs = listDirect('.svg');
+    const { mmds, svgs } = listDiagrams();
     const missing = mmds
       .filter((name) => !svgs.includes(`${stem(name)}.svg`))
       .map((n) => join(dir, n));
@@ -82,8 +88,7 @@ describe('src/assets/diagrams', () => {
   });
 
   it('すべての .svg に同じ名前の .mmd がある', () => {
-    const mmds = listDirect('.mmd');
-    const svgs = listDirect('.svg');
+    const { mmds, svgs } = listDiagrams();
     const orphans = svgs
       .filter((name) => !mmds.includes(`${stem(name)}.mmd`))
       .map((n) => join(dir, n));
@@ -91,8 +96,7 @@ describe('src/assets/diagrams', () => {
   });
 
   it('すべての .svg が今の .mmd に対して新しい', () => {
-    const mmds = listDirect('.mmd');
-    const svgs = listDirect('.svg');
+    const { mmds, svgs } = listDiagrams();
     const stale = svgs
       .filter((name) => mmds.includes(`${stem(name)}.mmd`))
       .flatMap((name) => {
