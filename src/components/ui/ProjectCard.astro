@@ -6,10 +6,8 @@ import Badge from './Badge.astro';
 import LinkButton from './LinkButton.astro';
 import ExternalLink from '../icons/ExternalLink.astro';
 
-export type Project = { id: string; data: z.output<typeof projectSchema> };
-
 interface Props {
-  project: Project;
+  project: { id: string; data: z.output<typeof projectSchema> };
 }
 
 const { project } = Astro.props;
@@ -33,18 +31,12 @@ const detailHref = `/projects/${project.id}/`;
     ))}
   </ul>
   <div class="mt-4 flex flex-wrap gap-2">
-    {links?.demo && (
-      <LinkButton href={links.demo}>
-        Live Demo
-        <ExternalLink />
-      </LinkButton>
-    )}
-    {links?.github && (
-      <LinkButton href={links.github}>
-        GitHub Code
-        <ExternalLink />
-      </LinkButton>
-    )}
+    {links?.demo &&
+      // prettier-ignore
+      <LinkButton href={links.demo}>Live Demo<ExternalLink /></LinkButton>}
+    {links?.github &&
+      // prettier-ignore
+      <LinkButton href={links.github}>GitHub Code<ExternalLink /></LinkButton>}
     <LinkButton href={detailHref}>技術解説を読む →</LinkButton>
   </div>
 </article>
