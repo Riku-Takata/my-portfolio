@@ -120,19 +120,9 @@ async function checkResumePdfMetadata(bytes) {
       details: [`${RESUME} を pdf-lib で読めない: ${message}`],
     };
   }
-  let catalog;
-  try {
-    catalog = doc.catalog;
-  } catch {
-    catalog = undefined;
-  }
-  if (!catalog) {
-    return {
-      id,
-      status: 'FAIL',
-      details: [`${RESUME} を pdf-lib で読めない: カタログがない`],
-    };
-  }
+  // カタログがない PDF は /Metadata もないとみなす(AC-12)。
+  const rootRef = doc.context.trailerInfo?.Root;
+  const catalog = rootRef ? doc.context.lookup(rootRef) : undefined;
   const details = [];
   const ref = doc.context.trailerInfo?.Info;
   const obj = ref ? doc.context.lookup(ref) : undefined;
@@ -146,7 +136,7 @@ async function checkResumePdfMetadata(bytes) {
       details.push('Title に元のファイルのパスか拡張子が入っている');
     }
   }
-  if (catalog.has(PDFName.of('Metadata'))) {
+  if (catalog instanceof PDFDict && catalog.has(PDFName.of('Metadata'))) {
     details.push('Metadata(XMP)がカタログに残っている');
   }
   return { id, status: details.length > 0 ? 'FAIL' : 'OK', details };

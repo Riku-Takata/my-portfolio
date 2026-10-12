@@ -167,10 +167,25 @@ describe('check-release', () => {
 
   it('4b: %PDF- で始まっても pdf-lib で読めないと metadata が FAIL', async () => {
     const root = await makeFixture();
-    put(root, 'public/resume.pdf', '%PDF-1.4\ngarbage');
+    // 暗号化された PDF は pdf-lib の load が例外を投げる。
+    put(
+      root,
+      'public/resume.pdf',
+      '%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n' +
+        '2 0 obj\n<< /Filter /Standard /V 1 /R 2 >>\nendobj\n' +
+        'trailer\n<< /Root 1 0 R /Encrypt 2 0 R >>\n%%EOF\n',
+    );
     const results: Result[] = await runChecks(root);
     expect(statusOf(results, 'resume-pdf')).toBe('OK');
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('FAIL');
+  });
+
+  it('4c: Info もカタログもない最小の PDF は metadata が OK', async () => {
+    const root = await makeFixture();
+    put(root, 'public/resume.pdf', '%PDF-1.4\n%%EOF\n');
+    const results: Result[] = await runChecks(root);
+    expect(statusOf(results, 'resume-pdf')).toBe('OK');
+    expect(statusOf(results, 'resume-pdf-metadata')).toBe('OK');
   });
 
   it('5: Author が残っていると FAIL', async () => {
