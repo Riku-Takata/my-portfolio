@@ -3,6 +3,10 @@
 @import "@fontsource-variable/jetbrains-mono";
 @plugin "@tailwindcss/typography";
 
+/* テストと設計書の中のクラス名の文字列から、使わない規則を作らせない */
+@source not "../../tests";
+@source not "../../docs";
+
 @theme {
   --font-sans:
     "Geist Variable", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
