@@ -143,7 +143,7 @@ async function checkResumePdfMetadata(bytes) {
     }
     const title = textOf(obj.get(PDFName.of('Title')));
     if (/[\\/]|\.(docx?|pages|key|odt)/i.test(title)) {
-      details.push(`Title に元のファイルのパスか拡張子が入っている: ${title}`);
+      details.push('Title に元のファイルのパスか拡張子が入っている');
     }
   }
   if (catalog.has(PDFName.of('Metadata'))) {
@@ -167,8 +167,7 @@ function checkTodoContent(root) {
   for (const { f, r } of entries) {
     const lines = readFileSync(f, 'utf8').split(/\r?\n/);
     lines.forEach((line, i) => {
-      if (line.includes('TODO(content)'))
-        details.push(`${r}:${i + 1}: ${line.trim()}`);
+      if (line.includes('TODO(content)')) details.push(`${r}:${i + 1}`);
     });
   }
   return {
