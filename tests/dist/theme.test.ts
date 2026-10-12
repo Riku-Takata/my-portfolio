@@ -117,10 +117,31 @@ describe('dist: フォント', () => {
     },
   );
 
+  // unicode-range を符号位置の範囲として読む(minify で U+0000-00FF が U+?? になる)
+  function unicodeRanges(block: string): [number, number][] {
+    const v = block.match(/unicode-range\s*:\s*([^;}]*)/i)?.[1] ?? '';
+    return v
+      .split(',')
+      .map((s) => s.trim().replace(/^u\+/i, ''))
+      .filter((s) => s !== '')
+      .map((s): [number, number] => {
+        if (s.includes('?'))
+          return [
+            parseInt(s.replace(/\?/g, '0'), 16),
+            parseInt(s.replace(/\?/g, 'F'), 16),
+          ];
+        const [lo, hi] = s.split('-');
+        return [parseInt(lo, 16), parseInt(hi ?? lo, 16)];
+      });
+  }
+
   function woff2Urls(family: string, latinOnly: boolean): string[] {
     return fontFaces
       .filter((f) => f.family.trim() === family)
-      .filter((f) => !latinOnly || /U\+0000-00FF/i.test(f.block))
+      .filter((f) => 
+        !latinOnly ||
+        unicodeRanges(f.block).some(([lo, hi]) => lo <= 0x0000 && hi >= 0x00ff),
+      )
       .flatMap((f) =>
         [...f.block.matchAll(/url\(\s*["']?([^"')]+\.woff2)["']?\s*\)/g)].map(
           (m) =>
