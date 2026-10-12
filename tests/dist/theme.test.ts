@@ -120,12 +120,7 @@ describe('dist: フォント', () => {
   function woff2Urls(family: string, latinOnly: boolean): string[] {
     return fontFaces
       .filter((f) => f.family.trim() === family)
-      // minify 後は U+0000-00FF が U+?? になる
-      .filter(
-        (f) =>
-          !latinOnly ||
-          /U\+0000-00FF|U\+\?\?(?![0-9A-Fa-f?])/i.test(f.block),
-      )
+      .filter((f) => !latinOnly || /U\+0000-00FF/i.test(f.block))
       .flatMap((f) =>
         [...f.block.matchAll(/url\(\s*["']?([^"')]+\.woff2)["']?\s*\)/g)].map(
           (m) =>
