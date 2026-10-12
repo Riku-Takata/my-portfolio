@@ -1,0 +1,31 @@
+# Zenn 記事の一覧はビルド時に取得するため、毎日 03:00 JST(18:00 UTC)と手動実行のときに
+# Vercel の Deploy Hook を呼んで本番を再ビルドする。
+#
+# schedule の停止条件: public リポジトリでは、リポジトリに 60 日間動き(repository activity)が
+# ないと、schedule のワークフローが自動で無効になる(README の「依存の確認記録」を参照)。
+# 何を「動き」とみなすかは、公式のページに定義がない。
+# 出典: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows
+# 出典: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows
+name: Rebuild
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel Deploy Hook
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "${VERCEL_DEPLOY_HOOK_URL:-}" ]; then
+            echo "::error::VERCEL_DEPLOY_HOOK_URL が登録されていません。Vercel の Deploy Hook の URL を Actions の repository secret に登録してください。"
+            exit 1
+          fi
+          curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
