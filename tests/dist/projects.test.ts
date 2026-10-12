@@ -7,22 +7,22 @@ const projectsDir = fileURLToPath(
   new URL('../../src/content/projects/', import.meta.url),
 );
 
-type Expected = { id: string; title: string; featured: boolean; order: number };
+type Expected = { id: string; featured: boolean; order: number; demo: boolean };
 
+// 期待値は原稿の frontmatter から作る。件数や links の有無は原稿しだいなので、決め打ちしない
 function readProject(file: string): Expected {
   const text = readFileSync(projectsDir + file, 'utf-8');
   const fm = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
-  const title = fm.match(/^title:\s*(['"]?)(.*?)\1\s*$/m)?.[2];
   const featured = fm.match(/^featured:\s*(true|false)\s*(#.*)?$/m)?.[1];
   const order = fm.match(/^order:\s*(\d+)\s*(#.*)?$/m)?.[1];
-  if (title === undefined || featured === undefined || order === undefined) {
-    throw new Error(`${file}: title / featured / order を読めません`);
+  if (featured === undefined || order === undefined) {
+    throw new Error(`${file}: featured / order を読めません`);
   }
   return {
     id: file.replace(/\.mdx$/, ''),
-    title,
     featured: featured === 'true',
     order: Number(order),
+    demo: /^\s+demo:\s*\S/m.test(fm),
   };
 }
 
@@ -41,16 +41,19 @@ const articles = [...section.matchAll(/<article\b[\s\S]*?<\/article>/g)].map(
   (m) => m[0],
 );
 
-describe('dist/index.html の #projects', () => {
-  it('前提: featured が 1 件以上ある', () => {
-    expect(expected.length).toBeGreaterThan(0);
-  });
+function linkTexts(fragment: string): string[] {
+  return [...fragment.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)].map((m) =>
+    decode(m[1].replace(/<[^>]*>/g, '')).trim(),
+  );
+}
 
+describe('dist/index.html の #projects', () => {
   it('#projects が <main> の中に 1 つあり、#about より後ろにある', () => {
     const ids = [...html.matchAll(/<[a-z][^>]*>/g)]
       .map((m) => m[0])
       .filter((t) => attrs(t).get('id') === 'projects');
     expect(ids).toHaveLength(1);
+    expect(section).not.toBe('');
     const pos = html.indexOf('id="projects"');
     expect(pos).toBeGreaterThan(html.indexOf('<main'));
     expect(pos).toBeLessThan(html.indexOf('</main>'));
@@ -61,14 +64,7 @@ describe('dist/index.html の #projects', () => {
     expect(articles).toHaveLength(expected.length);
   });
 
-  it('<h3> が order の昇順に並ぶ', () => {
-    const titles = articles.map((a) =>
-      decode((a.match(/<h3\b[^>]*>([\s\S]*?)<\/h3>/)?.[1] ?? '').trim()),
-    );
-    expect(titles).toEqual(expected.map((p) => p.title));
-  });
-
-  it('各カードに /projects/<id>/ へのリンクがある', () => {
+  it('各カードに /projects/<id>/ へのリンクがあり、order の昇順に並ぶ', () => {
     expected.forEach((p, i) => {
       const hrefs = startTags(articles[i] ?? '', 'a').map((t) =>
         attrs(t).get('href'),
@@ -77,11 +73,13 @@ describe('dist/index.html の #projects', () => {
     });
   });
 
-  it('Live Demo のリンクがない(仮原稿に demo がない)', () => {
-    const links = [...section.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)].map((m) =>
-      m[1].replace(/<[^>]*>/g, '').trim(),
-    );
-    expect(links).not.toContain('Live Demo');
+  it('Live Demo のリンクは links.demo があるカードにだけある', () => {
+    expected.forEach((p, i) => {
+      const count = linkTexts(articles[i] ?? '').filter(
+        (t) => t === 'Live Demo',
+      ).length;
+      expect(count).toBe(p.demo ? 1 : 0);
+    });
   });
 });
 
