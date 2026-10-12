@@ -244,11 +244,7 @@ function checkDiagrams(root) {
   const dir = path.join(root, 'src/assets/diagrams');
   const names = existsSync(dir)
     ? readdirSync(dir, { withFileTypes: true })
-        .filter(
-          (e) =>
-            e.isFile() ||
-            (e.isSymbolicLink() && isFile(path.join(dir, e.name))),
-        )
+        .filter((e) => e.isFile())
         .map((e) => e.name)
     : [];
   const strip = (/** @type {string} */ ext) =>
