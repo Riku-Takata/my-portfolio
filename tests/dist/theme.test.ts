@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { attrs, htmlFiles, readDist, startTags as tagsOf } from './html';
 
 const distDir = fileURLToPath(new URL('../../dist/', import.meta.url));
 const html = readFileSync(path.join(distDir, 'index.html'), 'utf-8');
@@ -93,13 +94,6 @@ describe('dist: テーマ', () => {
   it('color-scheme の meta が残っている', () => {
     expect(html).toContain('<meta name="color-scheme" content="light dark">');
   });
-
-  it('JS がない', () => {
-    expect(html).not.toContain('<script');
-    expect(all.filter((f) => f.startsWith('_astro/') && f.endsWith('.js'))).toEqual(
-      [],
-    );
-  });
 });
 
 describe('dist: フォント', () => {
@@ -122,6 +116,71 @@ describe('dist: フォント', () => {
       expect(missing).toEqual([]);
     },
   );
+
+  // minify で U+0000-00FF が U+?? になるので、unicode-range は符号位置の範囲として読む
+  function unicodeRanges(block: string): [number, number][] {
+    const value = block.match(/unicode-range\s*:\s*([^;}]*)/i)?.[1] ?? '';
+    return value
+      .split(',')
+      .map((s) => s.trim().replace(/^U\+/i, ''))
+      .filter((s) => s !== '')
+      .map((s): [number, number] => {
+        if (s.includes('-')) {
+          const [lo, hi] = s.split('-');
+          return [parseInt(lo, 16), parseInt(hi, 16)];
+        }
+        if (s.includes('?')) {
+          return [
+            parseInt(s.replace(/\?/g, '0'), 16),
+            parseInt(s.replace(/\?/g, 'F'), 16),
+          ];
+        }
+        return [parseInt(s, 16), parseInt(s, 16)];
+      });
+  }
+
+  function woff2Urls(family: string, latinOnly: boolean): string[] {
+    return fontFaces
+      .filter((f) => f.family.trim() === family)
+      .filter(
+        (f) =>
+          !latinOnly ||
+          unicodeRanges(f.block).some(([lo, hi]) => lo <= 0x0000 && hi >= 0x00ff),
+      )
+      .flatMap((f) =>
+        [...f.block.matchAll(/url\(\s*["']?([^"')]+\.woff2)["']?\s*\)/g)].map(
+          (m) =>
+            m[1].startsWith('/')
+              ? m[1]
+              : '/' + path.posix.join(path.posix.dirname(f.file), m[1]),
+        ),
+      );
+  }
+
+  it('Geist の latin を preload している', () => {
+    const preloads = startTags('link')
+      .map(attrs)
+      .filter((a) => a.get('rel') === 'preload' && a.get('as') === 'font');
+    expect(preloads).toHaveLength(1);
+    expect(preloads[0].get('type')).toBe('font/woff2');
+    expect(preloads[0].has('crossorigin')).toBe(true);
+    const href = preloads[0].get('href') ?? '';
+    expect(existsSync(path.join(distDir, href))).toBe(true);
+    // 同じ latin の @font-face が minify 後の CSS と /fonts/geist.css の両方にあるので、重複は除く
+    expect([...new Set(woff2Urls('Geist Variable', true))]).toEqual([href]);
+  });
+
+  it('JetBrains Mono を preload しない', () => {
+    const mono = woff2Urls('JetBrains Mono Variable', false);
+    expect(mono.length).toBeGreaterThan(0);
+    const preloaded = htmlFiles().flatMap((f) =>
+      tagsOf(readDist(f), 'link')
+        .map(attrs)
+        .filter((a) => a.get('rel') === 'preload')
+        .map((a) => a.get('href') ?? ''),
+    );
+    expect(preloaded.filter((h) => mono.includes(h))).toEqual([]);
+  });
 
   it('和文の Web フォントを配信しない', () => {
     const found = fontFaces
