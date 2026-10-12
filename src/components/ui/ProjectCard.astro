@@ -31,12 +31,18 @@ const detailHref = `/projects/${project.id}/`;
     ))}
   </ul>
   <div class="mt-4 flex flex-wrap gap-2">
-    {links?.demo &&
-      // prettier-ignore
-      <LinkButton href={links.demo}>Live Demo<ExternalLink /></LinkButton>}
-    {links?.github &&
-      // prettier-ignore
-      <LinkButton href={links.github}>GitHub Code<ExternalLink /></LinkButton>}
+    {links?.demo && (
+      <LinkButton href={links.demo}>
+        {'Live Demo'}
+        <ExternalLink />
+      </LinkButton>
+    )}
+    {links?.github && (
+      <LinkButton href={links.github}>
+        {'GitHub Code'}
+        <ExternalLink />
+      </LinkButton>
+    )}
     <LinkButton href={detailHref}>技術解説を読む →</LinkButton>
   </div>
 </article>
