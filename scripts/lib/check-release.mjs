@@ -29,7 +29,7 @@ function rel(root, p) {
 }
 
 /**
- * dir の下の通常ファイルを再帰で集める。シンボリックリンクはたどらない。
+ * dir の下のファイルを再帰で集める。ディレクトリのシンボリックリンクはたどらない。
  * @param {string} dir
  * @returns {string[]}
  */
@@ -43,7 +43,7 @@ function walkFiles(dir) {
   for (const e of entries) {
     const full = path.join(dir, e.name);
     if (e.isDirectory()) out.push(...walkFiles(full));
-    else if (e.isFile()) out.push(full);
+    else if (e.isFile() || (e.isSymbolicLink() && isFile(full))) out.push(full);
   }
   return out;
 }
@@ -175,7 +175,11 @@ function listProjectMdx(root) {
   const dir = path.join(root, 'src/content/projects');
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true })
-    .filter((e) => e.isFile() && e.name.endsWith('.mdx'))
+    .filter(
+      (e) =>
+        e.name.endsWith('.mdx') &&
+        (e.isFile() || (e.isSymbolicLink() && isFile(path.join(dir, e.name)))),
+    )
     .map((e) => path.join(dir, e.name))
     .sort();
 }
@@ -240,7 +244,11 @@ function checkDiagrams(root) {
   const dir = path.join(root, 'src/assets/diagrams');
   const names = existsSync(dir)
     ? readdirSync(dir, { withFileTypes: true })
-        .filter((e) => e.isFile())
+        .filter(
+          (e) =>
+            e.isFile() ||
+            (e.isSymbolicLink() && isFile(path.join(dir, e.name))),
+        )
         .map((e) => e.name)
     : [];
   const strip = (/** @type {string} */ ext) =>
