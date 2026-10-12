@@ -31,7 +31,9 @@ const ogImageUrl = new URL(ogImage, Astro.site).href;
     <meta property="og:url" content={canonical} />
     <meta property="og:type" content={type} />
     <meta property="og:locale" content="ja_JP" />
-    <meta name="twitter:card" content="summary_large_image" />    <Analytics />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="/fonts/geist.css" />
+    <Analytics />
   </head>
   <body class="bg-zinc-50 text-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
     <slot />
