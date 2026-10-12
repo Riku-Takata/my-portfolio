@@ -13,10 +13,14 @@ const dir = fileURLToPath(
 );
 
 function listDirect(ext: string): string[] {
-  return readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(ext))
-    .map((entry) => entry.name)
-    .sort();
+  try {
+    return readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(ext))
+      .map((entry) => entry.name)
+      .sort();
+  } catch {
+    return [];
+  }
 }
 
 const stem = (name: string) => name.slice(0, name.lastIndexOf('.'));
@@ -63,14 +67,14 @@ describe('diagram hash functions', () => {
 });
 
 describe('src/assets/diagrams', () => {
-  const mmds = listDirect('.mmd');
-  const svgs = listDirect('.svg');
-
   it('.mmd が1つ以上ある', () => {
+    const mmds = listDirect('.mmd');
     expect(mmds.length, `${dir} に .mmd がありません`).toBeGreaterThan(0);
   });
 
   it('すべての .mmd に同じ名前の .svg がある', () => {
+    const mmds = listDirect('.mmd');
+    const svgs = listDirect('.svg');
     const missing = mmds
       .filter((name) => !svgs.includes(`${stem(name)}.svg`))
       .map((n) => join(dir, n));
@@ -78,6 +82,8 @@ describe('src/assets/diagrams', () => {
   });
 
   it('すべての .svg に同じ名前の .mmd がある', () => {
+    const mmds = listDirect('.mmd');
+    const svgs = listDirect('.svg');
     const orphans = svgs
       .filter((name) => !mmds.includes(`${stem(name)}.mmd`))
       .map((n) => join(dir, n));
@@ -85,6 +91,8 @@ describe('src/assets/diagrams', () => {
   });
 
   it('すべての .svg が今の .mmd に対して新しい', () => {
+    const mmds = listDirect('.mmd');
+    const svgs = listDirect('.svg');
     const stale = svgs
       .filter((name) => mmds.includes(`${stem(name)}.mmd`))
       .flatMap((name) => {
