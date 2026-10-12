@@ -13,6 +13,7 @@ import path from 'node:path';
 import { PDFDict, PDFDocument, PDFHexString, PDFName } from 'pdf-lib';
 import defaultRun, {
   CHECK_IDS,
+  resolveRoot,
   runChecks,
   runChecksWithDetails,
 } from '../../scripts/lib/check-release.mjs';
@@ -370,5 +371,39 @@ describe('check-release', () => {
     expect(results.map((r) => r.id)).toEqual(IDS);
     for (const r of results) expect(['OK', 'FAIL', 'WARN']).toContain(r.status);
     expect(statusOf(results, 'featured')).toBe('FAIL');
+  });
+
+  it('resolveRoot: npm 経由のときだけ INIT_CWD を使う', async () => {
+    const root = await makeFixture();
+    const pkg = path.join(root, 'pkg');
+    const outside = path.join(root, 'fixture');
+    mkdirSync(pkg);
+    mkdirSync(outside);
+    const run = 'check:release';
+    expect(resolveRoot({ cwd: pkg, env: {} })).toBe(pkg);
+    expect(
+      resolveRoot({
+        cwd: pkg,
+        env: { npm_lifecycle_event: 'test', INIT_CWD: outside },
+      }),
+    ).toBe(pkg);
+    expect(
+      resolveRoot({
+        cwd: pkg,
+        env: { npm_lifecycle_event: run, INIT_CWD: pkg },
+      }),
+    ).toBe(pkg);
+    expect(
+      resolveRoot({
+        cwd: pkg,
+        env: { npm_lifecycle_event: run, INIT_CWD: path.join(pkg, 'src') },
+      }),
+    ).toBe(pkg);
+    expect(
+      resolveRoot({
+        cwd: pkg,
+        env: { npm_lifecycle_event: run, INIT_CWD: outside },
+      }),
+    ).toBe(outside);
   });
 });

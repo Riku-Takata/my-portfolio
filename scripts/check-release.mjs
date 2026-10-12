@@ -1,9 +1,15 @@
 import process from 'node:process';
-import { CHECK_IDS, runChecksWithDetails } from './lib/check-release.mjs';
+import {
+  CHECK_IDS,
+  resolveRoot,
+  runChecksWithDetails,
+} from './lib/check-release.mjs';
 
 let results;
 try {
-  results = await runChecksWithDetails(process.cwd());
+  results = await runChecksWithDetails(
+    resolveRoot({ cwd: process.cwd(), env: process.env }),
+  );
 } catch (e) {
   const message = e instanceof Error ? e.message : String(e);
   results = CHECK_IDS.map((id) => ({
