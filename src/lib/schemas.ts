@@ -55,3 +55,21 @@ export const projectSchema = z.strictObject({
   featured: z.boolean(),
   order: z.number().int().positive(),
 });
+
+// ISO 8601 の日時として読める文字列か
+const isIsoDateTime = (s: string) =>
+  /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/.test(
+    s,
+  ) && !Number.isNaN(Date.parse(s));
+
+// 記事1件の形。レスポンス全体の形(zennResponseSchema)とは分けて、記事ごとに検証する
+export const zennArticleSchema = z.object({
+  title: z.string(),
+  slug: z.string(),
+  published_at: z.string().refine(isIsoDateTime, {
+    message: 'published_at は ISO 8601 の日時にする',
+  }),
+});
+
+// レスポンス全体の形だけを見る。記事単位の検証は zennArticleSchema で行う
+export const zennResponseSchema = z.object({ articles: z.array(z.unknown()) });
