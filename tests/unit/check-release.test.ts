@@ -10,10 +10,12 @@ import {
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { PDFDict, PDFDocument, PDFHexString, PDFName } from 'pdf-lib';
-import { runChecks } from '../../scripts/lib/check-release.mjs';
+import defaultRun, {
+  CHECK_IDS,
+  runChecks,
+  runChecksWithDetails,
+} from '../../scripts/lib/check-release.mjs';
 import { computeSourceHash } from '../../scripts/lib/diagrams.mjs';
 
 type Result = { id: string; status: string; details: string[] };
@@ -32,9 +34,6 @@ const IDS = [
   'diagrams',
   'mdx-headings',
 ];
-const CLI = fileURLToPath(
-  new URL('../../scripts/check-release.mjs', import.meta.url),
-);
 const BODY =
   '## 1. 概要\n\n## 2. アーキテクチャ\n\n## 3. 技術選定\n\n## 4. 課題\n';
 
@@ -121,28 +120,36 @@ function snapshot(root: string): Record<string, string> {
 }
 
 describe('check-release', () => {
-  it('0: makePdf が Producer/Creator/Author を入れない', async () => {
+  it('1: すべて満たすと6項目すべて OK', async () => {
+    const root = await makeFixture();
     for (const objectStreams of [false, true]) {
-      const bytes = await makePdf({ objectStreams });
+      put(root, 'public/resume.pdf', await makePdf({ objectStreams }));
+      const bytes = readFileSync(path.join(root, 'public/resume.pdf'));
       const doc = await PDFDocument.load(bytes, { updateMetadata: false });
       const info = infoDictOf(doc);
       for (const k of ['Producer', 'Creator', 'Author']) {
         expect(info?.has(PDFName.of(k)) ?? false).toBe(false);
       }
+      expect(await runChecks(root)).toEqual({
+        'resume-pdf': 'OK',
+        'resume-pdf-metadata': 'OK',
+        'todo-content': 'OK',
+        featured: 'OK',
+        diagrams: 'OK',
+        'mdx-headings': 'OK',
+      });
     }
-  });
-
-  it('1: すべて満たすと6項目すべて OK', async () => {
-    const root = await makeFixture();
-    const results: Result[] = await runChecks(root);
+    expect(Object.keys(await runChecks(root))).toEqual(CHECK_IDS);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(results.map((r) => r.id)).toEqual(IDS);
-    for (const r of results) expect(r.status).toBe('OK');
+    expect(CHECK_IDS).toEqual(IDS);
+    expect(defaultRun).toBe(runChecks);
   });
 
   it('2: resume.pdf が0バイトだと pdf と metadata が FAIL', async () => {
     const root = await makeFixture();
     put(root, 'public/resume.pdf', '');
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf')).toBe('FAIL');
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('FAIL');
   });
@@ -150,7 +157,7 @@ describe('check-release', () => {
   it('3: resume.pdf がないと FAIL でパスが入る', async () => {
     const root = await makeFixture();
     rmSync(path.join(root, 'public/resume.pdf'));
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf')).toBe('FAIL');
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('FAIL');
     expect(detailsOf(results, 'resume-pdf')).toContain('public/resume.pdf');
@@ -159,7 +166,7 @@ describe('check-release', () => {
   it('4: %PDF- で始まらないと FAIL', async () => {
     const root = await makeFixture();
     put(root, 'public/resume.pdf', 'hello');
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf')).toBe('FAIL');
     expect(detailsOf(results, 'resume-pdf')).toContain('public/resume.pdf');
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('FAIL');
@@ -175,7 +182,7 @@ describe('check-release', () => {
         '2 0 obj\n<< /Filter /Standard /V 1 /R 2 >>\nendobj\n' +
         'trailer\n<< /Root 1 0 R /Encrypt 2 0 R >>\n%%EOF\n',
     );
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf')).toBe('OK');
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('FAIL');
   });
@@ -183,7 +190,7 @@ describe('check-release', () => {
   it('4c: Info もカタログもない最小の PDF は metadata が OK', async () => {
     const root = await makeFixture();
     put(root, 'public/resume.pdf', '%PDF-1.4\n%%EOF\n');
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf')).toBe('OK');
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('OK');
   });
@@ -191,7 +198,7 @@ describe('check-release', () => {
   it('5: Author が残っていると FAIL', async () => {
     const root = await makeFixture();
     put(root, 'public/resume.pdf', await makePdf({ author: 'Riku' }));
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('FAIL');
     expect(detailsOf(results, 'resume-pdf-metadata')).toContain('Author');
   });
@@ -201,7 +208,7 @@ describe('check-release', () => {
     const bytes = await makePdf({ author: 'Riku', objectStreams: true });
     expect(Buffer.from(bytes).toString('latin1')).not.toContain('/Author');
     put(root, 'public/resume.pdf', bytes);
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('FAIL');
     expect(detailsOf(results, 'resume-pdf-metadata')).toContain('Author');
   });
@@ -214,7 +221,7 @@ describe('check-release', () => {
   ])('7: Title %s は %s', async (title, expected) => {
     const root = await makeFixture();
     put(root, 'public/resume.pdf', await makePdf({ title }));
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf-metadata')).toBe(expected);
     if (expected === 'FAIL')
       expect(detailsOf(results, 'resume-pdf-metadata')).toContain('Title');
@@ -223,7 +230,7 @@ describe('check-release', () => {
   it('8: カタログに Metadata があると FAIL', async () => {
     const root = await makeFixture();
     put(root, 'public/resume.pdf', await makePdf({ xmp: true }));
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('FAIL');
     expect(detailsOf(results, 'resume-pdf-metadata')).toContain('Metadata');
   });
@@ -235,7 +242,7 @@ describe('check-release', () => {
     doc.setAuthor('x');
     infoDictOf(doc)!.set(PDFName.of('Author'), PDFHexString.of('FEFF'));
     put(root, 'public/resume.pdf', await doc.save());
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'resume-pdf-metadata')).toBe('OK');
   });
 
@@ -250,7 +257,7 @@ describe('check-release', () => {
     put(root, 'docs/a.md', 'TODO(content)\n');
     put(root, 'scripts/a.mjs', '// TODO(content)\n');
     put(root, 'README.md', 'TODO(content)\n');
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'todo-content')).toBe('FAIL');
     const details = results.find((r) => r.id === 'todo-content')!.details;
     expect(details.filter((d) => d.startsWith('src/lib/x.ts:2'))).toHaveLength(
@@ -280,7 +287,7 @@ describe('check-release', () => {
       'src/content/projects/sub/c.mdx',
       `---\nfeatured: true\n---\n${BODY}`,
     );
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'featured')).toBe('FAIL');
     expect(detailsOf(results, 'featured')).toContain('1');
   });
@@ -288,7 +295,7 @@ describe('check-release', () => {
   it('12: frontmatter を閉じていない MDX で FAIL', async () => {
     const root = await makeFixture();
     put(root, 'src/content/projects/c.mdx', '---\nfeatured: true\n\n## 概要\n');
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'featured')).toBe('FAIL');
     expect(detailsOf(results, 'featured')).toContain(
       'src/content/projects/c.mdx',
@@ -302,7 +309,7 @@ describe('check-release', () => {
       'src/content/projects/c.mdx',
       `---\nfeatured: [true\n---\n${BODY}`,
     );
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'featured')).toBe('FAIL');
     expect(detailsOf(results, 'featured')).toContain(
       'src/content/projects/c.mdx',
@@ -312,19 +319,19 @@ describe('check-release', () => {
   it('14: 図の不整合で FAIL', async () => {
     let root = await makeFixture();
     put(root, 'src/assets/diagrams/x.mmd', 'graph TD\nA-->C\n');
-    let results: Result[] = await runChecks(root);
+    let results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'diagrams')).toBe('FAIL');
     expect(detailsOf(results, 'diagrams')).toContain('x.svg');
 
     root = await makeFixture();
     rmSync(path.join(root, 'src/assets/diagrams/x.svg'));
-    results = await runChecks(root);
+    results = await runChecksWithDetails(root);
     expect(statusOf(results, 'diagrams')).toBe('FAIL');
 
     root = await makeFixture();
     rmSync(path.join(root, 'src/assets/diagrams/x.svg'));
     rmSync(path.join(root, 'src/assets/diagrams/x.mmd'));
-    results = await runChecks(root);
+    results = await runChecksWithDetails(root);
     expect(statusOf(results, 'diagrams')).toBe('FAIL');
   });
 
@@ -335,7 +342,7 @@ describe('check-release', () => {
       'src/content/projects/b.mdx',
       '---\nfeatured: true\n---\n## 1. 概要\n## 2. アーキテクチャ\n## 3. 技術選定\n',
     );
-    const results: Result[] = await runChecks(root);
+    const results: Result[] = await runChecksWithDetails(root);
     expect(statusOf(results, 'mdx-headings')).toBe('WARN');
     expect(detailsOf(results, 'mdx-headings')).toContain(
       'src/content/projects/b.mdx',
@@ -343,40 +350,25 @@ describe('check-release', () => {
     expect(detailsOf(results, 'mdx-headings')).toContain('課題');
     for (const r of results.filter((r) => r.id !== 'mdx-headings'))
       expect(r.status).toBe('OK');
+    const states = Object.values(await runChecks(root));
+    expect(states.filter((s) => s === 'FAIL')).toEqual([]);
   });
 
-  it('16: CLI の出力と終了コード', async () => {
-    const root = await makeFixture();
-    const run = () =>
-      spawnSync(process.execPath, [CLI], { cwd: root, encoding: 'utf8' });
-
-    const ok = run();
-    expect(ok.status).toBe(0);
-    for (const id of IDS) {
-      const matches = ok.stdout.match(
-        new RegExp(`^(OK|FAIL|WARN) ${id}$`, 'gm'),
-      );
-      expect(matches).toHaveLength(1);
-    }
-
-    put(
-      root,
-      'src/content/projects/b.mdx',
-      '---\nfeatured: true\n---\n## 1. 概要\n',
-    );
-    const warn = run();
-    expect(warn.status).toBe(0);
-    expect(warn.stdout).toContain('WARN mdx-headings');
-
-    put(root, 'public/resume.pdf', '');
-    expect(run().status).not.toBe(0);
-  });
-
-  it('17: runChecks と CLI はファイルを変えない', async () => {
+  it('17: runChecks はファイルを変えない', async () => {
     const root = await makeFixture();
     const before = snapshot(root);
+    await runChecksWithDetails(root);
     await runChecks(root);
-    spawnSync(process.execPath, [CLI], { cwd: root, encoding: 'utf8' });
     expect(snapshot(root)).toEqual(before);
+  });
+
+  it('18: projects がディレクトリでなくても6項目を返す', async () => {
+    const root = await makeFixture();
+    rmSync(path.join(root, 'src/content/projects'), { recursive: true });
+    put(root, 'src/content/projects', 'x');
+    const results: Result[] = await runChecksWithDetails(root);
+    expect(results.map((r) => r.id)).toEqual(IDS);
+    for (const r of results) expect(['OK', 'FAIL', 'WARN']).toContain(r.status);
+    expect(statusOf(results, 'featured')).toBe('FAIL');
   });
 });

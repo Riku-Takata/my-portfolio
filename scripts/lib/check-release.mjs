@@ -299,19 +299,74 @@ function checkMdxHeadings(root) {
   };
 }
 
+/** 出力と戻り値の順番。 */
+export const CHECK_IDS = [
+  'resume-pdf',
+  'resume-pdf-metadata',
+  'todo-content',
+  'featured',
+  'diagrams',
+  'mdx-headings',
+];
+
 /**
- * 公開前チェックをすべて流す。ファイルは読むだけで、書き換えない。
+ * 判定が例外を投げても、その項目を FAIL にして続ける。
+ * @param {string} id
+ * @param {() => CheckResult | Promise<CheckResult>} fn
+ * @returns {Promise<CheckResult>}
+ */
+async function guard(id, fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return {
+      id,
+      status: 'FAIL',
+      details: [`${id} を確かめられない: ${message}`],
+    };
+  }
+}
+
+/**
+ * 公開前チェックを流し、項目ごとの状態と詳細を返す。ファイルは読むだけで変えない。
  * @param {string} root
  * @returns {Promise<CheckResult[]>}
  */
-export async function runChecks(root) {
-  const { result: pdf, bytes } = checkResumePdf(root);
+export async function runChecksWithDetails(root) {
+  /** @type {{ result: CheckResult, bytes: Buffer | null }} */
+  let pdf;
+  try {
+    pdf = checkResumePdf(root);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    pdf = {
+      result: {
+        id: 'resume-pdf',
+        status: 'FAIL',
+        details: [`${RESUME} を確かめられない: ${message}`],
+      },
+      bytes: null,
+    };
+  }
   return [
-    pdf,
-    await checkResumePdfMetadata(bytes),
-    checkTodoContent(root),
-    checkFeatured(root),
-    checkDiagrams(root),
-    checkMdxHeadings(root),
+    pdf.result,
+    await guard('resume-pdf-metadata', () => checkResumePdfMetadata(pdf.bytes)),
+    await guard('todo-content', () => checkTodoContent(root)),
+    await guard('featured', () => checkFeatured(root)),
+    await guard('diagrams', () => checkDiagrams(root)),
+    await guard('mdx-headings', () => checkMdxHeadings(root)),
   ];
 }
+
+/**
+ * 項目IDをキー、状態('OK' | 'FAIL' | 'WARN')を値にした連想を返す。
+ * @param {string} root
+ * @returns {Promise<Record<string, Status>>}
+ */
+export async function runChecks(root) {
+  const results = await runChecksWithDetails(root);
+  return Object.fromEntries(results.map((r) => [r.id, r.status]));
+}
+
+export default runChecks;
