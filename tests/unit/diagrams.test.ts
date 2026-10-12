@@ -1,5 +1,6 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   computeSourceHash,
@@ -7,12 +8,19 @@ import {
   isSvgFresh,
 } from '../../scripts/lib/diagrams.mjs';
 
-// npm test はリポジトリのルートで流れるので、cwd から求める
 const relDir = 'src/assets/diagrams';
-const absDir = () => resolve(process.cwd(), relDir);
 
-function listDirect(ext: string): string[] {
-  const dir = absDir();
+// cwd から求めた場所と、このファイルから求めた場所は、--root や
+// シンボリックリンク越しに流すと食い違う。どちらも対象にして、片方だけを見て通らないようにする
+function diagramDirs(): string[] {
+  const dirs = [
+    resolve(process.cwd(), relDir),
+    fileURLToPath(new URL(`../../${relDir}/`, import.meta.url)),
+  ].map((dir) => (existsSync(dir) ? realpathSync(dir) : resolve(dir)));
+  return [...new Set(dirs)];
+}
+
+function listDirect(dir: string, ext: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(ext))
@@ -65,46 +73,51 @@ describe('diagram hash functions', () => {
 
 describe('src/assets/diagrams', () => {
   it('.mmd が1つ以上ある', () => {
-    const mmds = listDirect('.mmd');
-    expect(
-      mmds.length,
-      `${relDir}/ の直下に .mmd が0件です(${absDir()})`,
-    ).toBeGreaterThan(0);
+    const empty = diagramDirs().filter(
+      (dir) => listDirect(dir, '.mmd').length === 0,
+    );
+    expect(empty, `${relDir}/ の直下に .mmd が0件です`).toEqual([]);
   });
 
   it('すべての .mmd に同じ名前の .svg がある', () => {
-    const svgs = listDirect('.svg');
-    const missing = listDirect('.mmd')
-      .filter((name) => !svgs.includes(`${stem(name)}.svg`))
-      .map((name) => `${relDir}/${name}`);
+    const missing = diagramDirs().flatMap((dir) => {
+      const svgs = listDirect(dir, '.svg');
+      return listDirect(dir, '.mmd')
+        .filter((name) => !svgs.includes(`${stem(name)}.svg`))
+        .map((name) => resolve(dir, name));
+    });
     expect(missing).toEqual([]);
   });
 
   it('すべての .svg に同じ名前の .mmd がある', () => {
-    const mmds = listDirect('.mmd');
-    const orphans = listDirect('.svg')
-      .filter((name) => !mmds.includes(`${stem(name)}.mmd`))
-      .map((name) => `${relDir}/${name}`);
+    const orphans = diagramDirs().flatMap((dir) => {
+      const mmds = listDirect(dir, '.mmd');
+      return listDirect(dir, '.svg')
+        .filter((name) => !mmds.includes(`${stem(name)}.mmd`))
+        .map((name) => resolve(dir, name));
+    });
     expect(orphans).toEqual([]);
   });
 
   it('すべての .svg が今の .mmd に対して新しい', () => {
-    const mmds = listDirect('.mmd');
-    const stale = listDirect('.svg')
-      .filter((name) => mmds.includes(`${stem(name)}.mmd`))
-      .flatMap((name) => {
-        const mmd = readFileSync(resolve(absDir(), `${stem(name)}.mmd`));
-        const svg = readFileSync(resolve(absDir(), name), 'utf8');
-        return isSvgFresh(mmd, svg)
-          ? []
-          : [
-              {
-                file: `${relDir}/${name}`,
-                expected: computeSourceHash(mmd),
-                actual: extractSourceHash(svg),
-              },
-            ];
-      });
+    const stale = diagramDirs().flatMap((dir) => {
+      const mmds = listDirect(dir, '.mmd');
+      return listDirect(dir, '.svg')
+        .filter((name) => mmds.includes(`${stem(name)}.mmd`))
+        .flatMap((name) => {
+          const mmd = readFileSync(resolve(dir, `${stem(name)}.mmd`));
+          const svg = readFileSync(resolve(dir, name), 'utf8');
+          return isSvgFresh(mmd, svg)
+            ? []
+            : [
+                {
+                  file: resolve(dir, name),
+                  expected: computeSourceHash(mmd),
+                  actual: extractSourceHash(svg),
+                },
+              ];
+        });
+    });
     expect(stale).toEqual([]);
   });
 });
