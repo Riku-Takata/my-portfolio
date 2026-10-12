@@ -301,18 +301,15 @@ function checkMdxHeadings(root) {
 
 /**
  * 判定のルートを決める。ふつうは cwd を使う。
- * `npm run check:release` で起動され、npm を流したディレクトリ(INIT_CWD)が
- * パッケージの外にあるときは、そちらをルートにする(npm は cwd をパッケージのルートに移すため)。
+ * `npm run check:release` で起動されたときは、npm を流したディレクトリ(INIT_CWD)を
+ * ルートにする(npm は cwd をパッケージのルートに移すため)。
  * @param {{ cwd: string, env: Record<string, string | undefined> }} opts
  * @returns {string}
  */
 export function resolveRoot({ cwd, env }) {
   const init = env.INIT_CWD;
   if (env.npm_lifecycle_event !== 'check:release' || !init) return cwd;
-  const r = path.relative(cwd, path.resolve(init));
-  const outside =
-    r === '..' || r.startsWith(`..${path.sep}`) || path.isAbsolute(r);
-  return outside ? path.resolve(init) : cwd;
+  return path.resolve(init);
 }
 
 /** 出力と戻り値の順番。 */

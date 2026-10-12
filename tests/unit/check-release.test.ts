@@ -393,12 +393,13 @@ describe('check-release', () => {
         env: { npm_lifecycle_event: run, INIT_CWD: pkg },
       }),
     ).toBe(pkg);
+    const inside = path.join(pkg, 'tmp', 'fixture');
     expect(
       resolveRoot({
         cwd: pkg,
-        env: { npm_lifecycle_event: run, INIT_CWD: path.join(pkg, 'src') },
+        env: { npm_lifecycle_event: run, INIT_CWD: inside },
       }),
-    ).toBe(pkg);
+    ).toBe(inside);
     expect(
       resolveRoot({
         cwd: pkg,
