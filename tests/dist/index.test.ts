@@ -22,8 +22,7 @@ describe('dist/index.html', () => {
 
   describe('メタ情報', () => {
     const html = readFileSync(indexPath, 'utf-8');
-    const { nameJa, nameEn } = resume.profile;
-    const title = `${nameJa} (${nameEn}) | Portfolio`;
+    const title = '高田 莉玖 (Riku Takata) | Portfolio';
 
     it('title', () => {
       expect(titleTexts(html)).toEqual([title]);
