@@ -1,0 +1,58 @@
+---
+import Container from '../common/Container.astro';
+import LinkButton from '../ui/LinkButton.astro';
+import Github from '../icons/Github.astro';
+import X from '../icons/X.astro';
+import Mail from '../icons/Mail.astro';
+import FileText from '../icons/FileText.astro';
+
+interface Props {
+  profile: {
+    nameJa: string;
+    nameEn: string;
+    affiliation: string;
+    focus: string[];
+    links: { github: string; x: string; email: string; resumePdf: string };
+  };
+}
+
+const { profile } = Astro.props;
+---
+
+<section id="top" class="py-16">
+  <Container>
+    <h1 class="text-3xl font-semibold tracking-tight">{profile.nameJa}</h1>
+    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+      {profile.nameEn}
+    </p>
+    <p class="mt-4 text-base leading-7">{profile.affiliation}</p>
+    <p class="text-sm text-zinc-500 dark:text-zinc-400">
+      {profile.focus.join(' · ')}
+    </p>
+    <ul class="mt-6 flex flex-wrap gap-2">
+      <li>
+        <LinkButton href={profile.links.github}>
+          <Github />
+          GitHub
+        </LinkButton>
+      </li>
+      <li>
+        <LinkButton href={profile.links.x}>
+          <X />X
+        </LinkButton>
+      </li>
+      <li>
+        <LinkButton href={`mailto:${profile.links.email}`}>
+          <Mail />
+          Mail
+        </LinkButton>
+      </li>
+      <li>
+        <LinkButton href={profile.links.resumePdf}>
+          <FileText />
+          Resume (PDF)
+        </LinkButton>
+      </li>
+    </ul>
+  </Container>
+</section>

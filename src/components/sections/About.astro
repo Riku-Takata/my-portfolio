@@ -1,0 +1,17 @@
+---
+import Section from '../common/Section.astro';
+
+interface Props {
+  paragraphs: string[];
+}
+
+const { paragraphs } = Astro.props;
+---
+
+<Section id="about" label="About">
+  <div class="mt-4 space-y-4">
+    {paragraphs.map((p) => (
+      <p class="text-base leading-7">{p}</p>
+    ))}
+  </div>
+</Section>
