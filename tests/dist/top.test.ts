@@ -89,19 +89,63 @@ function links(fragment: string) {
   });
 }
 
-const html = readDist('index.html');
-const top = elementsWithId(html, 'top');
-const about = elementsWithId(html, 'about');
-const hero = top[0]?.html ?? '';
-const aboutHtml = about[0]?.html ?? '';
 const { profile } = resume;
+
+interface Page {
+  html: string;
+  top: El[];
+  about: El[];
+  hero: string;
+  aboutHtml: string;
+  h1Tags: string[];
+  h1: El | null;
+  heroEls: El[];
+  inH1: (e: El) => boolean;
+  heroLinks: ReturnType<typeof links>;
+  ps: El[];
+}
+
+let cache: Page | undefined;
+
+// 解析は各 it の中で行い、壊れた HTML の例外をその it の失敗として報告する
+function page(): Page {
+  if (cache) return cache;
+  const html = readDist('index.html');
+  const top = elementsWithId(html, 'top');
+  const about = elementsWithId(html, 'about');
+  const hero = top[0]?.html ?? '';
+  const aboutHtml = about[0]?.html ?? '';
+  const h1Tags = startTags(html, 'h1');
+  const h1 = h1Tags.length === 1 ? outer(html, html.indexOf(h1Tags[0])) : null;
+  const heroOffset = top[0]?.start ?? 0;
+  const inH1 = (e: El) =>
+    h1 !== null &&
+    e.start + heroOffset >= h1.start &&
+    e.start + heroOffset < h1.end;
+  cache = {
+    html,
+    top,
+    about,
+    hero,
+    aboutHtml,
+    h1Tags,
+    h1,
+    heroEls: allElements(hero),
+    inH1,
+    heroLinks: links(hero),
+    ps: allElements(aboutHtml).filter((e) => /^<p\b/i.test(e.tag)),
+  };
+  return cache;
+}
 
 describe('dist: トップの Hero と About', () => {
   it('AC-1: id="top" の要素がちょうど1つ', () => {
+    const { top } = page();
     expect(top).toHaveLength(1);
   });
 
   it('AC-24: main は1つで top と about を含み、top は section', () => {
+    const { html, top, about } = page();
     const mains = startTags(html, 'main');
     expect(mains).toHaveLength(1);
     const main = outer(html, html.indexOf(mains[0]));
@@ -114,10 +158,8 @@ describe('dist: トップの Hero と About', () => {
     expect(/^<section\b/i.test(top[0].tag)).toBe(true);
   });
 
-  const h1Tags = startTags(html, 'h1');
-  const h1 = h1Tags.length === 1 ? outer(html, html.indexOf(h1Tags[0])) : null;
-
   it('AC-2: h1 は1つで Hero の中、テキストは nameJa', () => {
+    const { top, h1Tags, h1 } = page();
     expect(h1Tags).toHaveLength(1);
     expect(top).toHaveLength(1);
     expect(h1).not.toBeNull();
@@ -127,24 +169,20 @@ describe('dist: トップの Hero と About', () => {
   });
 
   it('AC-3: h1 の class', () => {
+    const { h1 } = page();
     expect(classes(h1?.tag ?? '')).toEqual(
       expect.arrayContaining(['text-3xl', 'font-semibold', 'tracking-tight']),
     );
   });
 
   it('AC-4: h1 に nameEn が入っていない', () => {
+    const { h1 } = page();
     expect(h1).not.toBeNull();
     expect(text(h1!.html)).not.toContain(norm(profile.nameEn));
   });
 
-  const heroEls = allElements(hero);
-  const heroOffset = top[0]?.start ?? 0;
-  const inH1 = (e: El) =>
-    h1 !== null &&
-    e.start + heroOffset >= h1.start &&
-    e.start + heroOffset < h1.end;
-
   it('AC-5: h1 の外に nameEn の要素がある', () => {
+    const { heroEls, inH1 } = page();
     const found = heroEls.filter(
       (e) => !inH1(e) && text(e.html) === norm(profile.nameEn),
     );
@@ -155,10 +193,13 @@ describe('dist: トップの Hero と About', () => {
   });
 
   it('AC-6: affiliation の要素がある', () => {
-    expect(heroEls.some((e) => text(e.html) === norm(profile.affiliation))).toBe(true);
+    const { heroEls } = page();
+    const affiliation = norm(profile.affiliation);
+    expect(heroEls.some((e) => text(e.html) === affiliation)).toBe(true);
   });
 
   it('AC-7: focus の要素がある', () => {
+    const { heroEls } = page();
     expect(
       heroEls.some(
         (e) =>
@@ -171,9 +212,8 @@ describe('dist: トップの Hero と About', () => {
     ).toBe(true);
   });
 
-  const heroLinks = links(hero);
-
   it('AC-8: Hero の4つのリンク', () => {
+    const { heroLinks } = page();
     expect(heroLinks.map((l) => [l.href, l.text])).toEqual([
       [profile.links.github, 'GitHub'],
       [profile.links.x, 'X'],
@@ -183,6 +223,7 @@ describe('dist: トップの Hero と About', () => {
   });
 
   it('AC-9: アイコンの svg は aria-hidden', () => {
+    const { hero, heroLinks } = page();
     expect(heroLinks).toHaveLength(4);
     for (const l of heroLinks) {
       expect(startTags(l.inner, 'svg').length).toBeGreaterThanOrEqual(1);
@@ -194,9 +235,10 @@ describe('dist: トップの Hero と About', () => {
   });
 
   it('AC-10: target と rel', () => {
+    const { heroLinks } = page();
     expect(heroLinks).toHaveLength(4);
     for (const l of heroLinks.slice(0, 2)) {
-      expect(l.target).toBe('_blank');
+      expect(l.target?.toLowerCase()).toBe('_blank');
       expect(l.rel).toBe('noopener noreferrer');
     }
     for (const l of heroLinks.slice(2)) {
@@ -205,29 +247,32 @@ describe('dist: トップの Hero と About', () => {
   });
 
   it('AC-11: img と picture がない', () => {
+    const { hero } = page();
     expect(startTags(hero, 'img')).toEqual([]);
     expect(startTags(hero, 'picture')).toEqual([]);
   });
 
   it('AC-12: about は1つで top より後', () => {
+    const { top, about } = page();
     expect(about).toHaveLength(1);
     expect(top).toHaveLength(1);
     expect(about[0].start).toBeGreaterThan(top[0].start);
   });
 
   it('AC-13: about の h2 は About', () => {
+    const { aboutHtml } = page();
     const h2 = allElements(aboutHtml).filter((e) => /^<h2\b/i.test(e.tag));
     expect(h2).toHaveLength(1);
     expect(text(h2[0].html)).toBe('About');
   });
 
-  const ps = allElements(aboutHtml).filter((e) => /^<p\b/i.test(e.tag));
-
   it('AC-14: about の p は resume.about と同じ', () => {
+    const { ps } = page();
     expect(ps.map((e) => text(e.html))).toEqual(resume.about.map(norm));
   });
 
   it('AC-15: about の p の class', () => {
+    const { ps } = page();
     expect(ps.length).toBeGreaterThan(0);
     for (const p of ps) {
       expect(classes(p.tag)).toEqual(
@@ -237,6 +282,7 @@ describe('dist: トップの Hero と About', () => {
   });
 
   it('AC-19: デモの出力がない', () => {
+    const { html } = page();
     const demo = allElements(html)
       .map((e) => e.tag)
       .filter((t) => attrs(t).has('data-demo'));
@@ -254,8 +300,11 @@ describe('dist: 全ページの target="_blank"', () => {
         .filter((t) => {
           const a = attrs(t);
           return (
-            a.get('target') === '_blank' &&
-            !(a.get('rel') ?? '').split(/\s+/).includes('noopener')
+            (a.get('target') ?? '').toLowerCase() === '_blank' &&
+            !(a.get('rel') ?? '')
+              .toLowerCase()
+              .split(/\s+/)
+              .includes('noopener')
           );
         })
         .map((t) => `${f}: ${t}`),
