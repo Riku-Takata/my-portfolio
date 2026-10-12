@@ -1,0 +1,6 @@
+{
+  "theme": "neutral",
+  "fontFamily": "\"Hiragino Sans\", \"Hiragino Kaku Gothic ProN\", \"Noto Sans JP\", \"Yu Gothic UI\", Meiryo, sans-serif",
+  "htmlLabels": false,
+  "flowchart": { "htmlLabels": false }
+}
