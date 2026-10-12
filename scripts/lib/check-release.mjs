@@ -128,10 +128,10 @@ async function checkResumePdfMetadata(bytes) {
   const obj = ref ? doc.context.lookup(ref) : undefined;
   if (obj instanceof PDFDict) {
     for (const key of ['Author', 'Creator', 'Producer']) {
-      if (textOf(obj.get(PDFName.of(key))) !== '')
+      if (textOf(obj.lookup(PDFName.of(key))) !== '')
         details.push(`${key} が残っている`);
     }
-    const title = textOf(obj.get(PDFName.of('Title')));
+    const title = textOf(obj.lookup(PDFName.of('Title')));
     if (/[\\/]|\.(docx?|pages|key|odt)/i.test(title)) {
       details.push('Title に元のファイルのパスか拡張子が入っている');
     }
