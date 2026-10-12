@@ -27,7 +27,12 @@ function text(s: string): string {
       String.fromCodePoint(parseInt(h, 16)),
     )
     .replace(/&#(\d+);/g, (_, d: string) => String.fromCodePoint(Number(d)));
-  return decode(raw).replace(/\s+/g, ' ').trim();
+  return norm(decode(raw));
+}
+
+// 受け入れ基準の「テキスト」と同じく、連続する空白を1つにまとめて trim する
+function norm(s: string): string {
+  return s.replace(/\s+/g, ' ').trim();
 }
 
 function outer(html: string, start: number): El {
@@ -118,7 +123,7 @@ describe('dist: トップの Hero と About', () => {
     expect(h1).not.toBeNull();
     expect(h1!.start).toBeGreaterThan(top[0].start);
     expect(h1!.end).toBeLessThanOrEqual(top[0].end);
-    expect(text(h1!.html)).toBe(profile.nameJa);
+    expect(text(h1!.html)).toBe(norm(profile.nameJa));
   });
 
   it('AC-3: h1 の class', () => {
@@ -129,7 +134,7 @@ describe('dist: トップの Hero と About', () => {
 
   it('AC-4: h1 に nameEn が入っていない', () => {
     expect(h1).not.toBeNull();
-    expect(text(h1!.html)).not.toContain(profile.nameEn);
+    expect(text(h1!.html)).not.toContain(norm(profile.nameEn));
   });
 
   const heroEls = allElements(hero);
@@ -141,7 +146,7 @@ describe('dist: トップの Hero と About', () => {
 
   it('AC-5: h1 の外に nameEn の要素がある', () => {
     const found = heroEls.filter(
-      (e) => !inH1(e) && text(e.html) === profile.nameEn,
+      (e) => !inH1(e) && text(e.html) === norm(profile.nameEn),
     );
     expect(found.length).toBeGreaterThan(0);
     expect(classes(found[0].tag)).toEqual(
@@ -150,7 +155,7 @@ describe('dist: トップの Hero と About', () => {
   });
 
   it('AC-6: affiliation の要素がある', () => {
-    expect(heroEls.some((e) => text(e.html) === profile.affiliation)).toBe(true);
+    expect(heroEls.some((e) => text(e.html) === norm(profile.affiliation))).toBe(true);
   });
 
   it('AC-7: focus の要素がある', () => {
@@ -161,7 +166,7 @@ describe('dist: トップの Hero と About', () => {
             text(e.html)
               .split('·')
               .map((s) => s.trim()),
-          ) === JSON.stringify(profile.focus),
+          ) === JSON.stringify(profile.focus.map(norm)),
       ),
     ).toBe(true);
   });
@@ -219,7 +224,7 @@ describe('dist: トップの Hero と About', () => {
   const ps = allElements(aboutHtml).filter((e) => /^<p\b/i.test(e.tag));
 
   it('AC-14: about の p は resume.about と同じ', () => {
-    expect(ps.map((e) => text(e.html))).toEqual(resume.about);
+    expect(ps.map((e) => text(e.html))).toEqual(resume.about.map(norm));
   });
 
   it('AC-15: about の p の class', () => {
