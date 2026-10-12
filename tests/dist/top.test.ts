@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { resume } from '../../src/content/resume';
-import { attrs, decode, htmlFiles, readDist, startTags } from './html';
+import { attrs, decode, htmlFiles, readDist } from './html';
 
 const VOID = new Set(['img', 'br', 'meta', 'link', 'input', 'source', 'hr']);
+
+// 属性値の中の ">" と大文字のタグ名も扱う開始タグの本体
+const TAG_REST = `(?=[\\s>/])(?:"[^"]*"|'[^']*'|[^>"'])*>`;
+
+function startTags(html: string, name: string): string[] {
+  return [...html.matchAll(new RegExp(`<${name}${TAG_REST}`, 'gi'))].map(
+    (m) => m[0],
+  );
+}
 
 interface El {
   start: number;
@@ -13,7 +22,7 @@ interface El {
 
 function text(s: string): string {
   const raw = s
-    .replace(/<[^>]*>/g, '')
+    .replace(/<\/?[a-zA-Z](?:"[^"]*"|'[^']*'|[^>"'])*>/g, '')
     .replace(/&#x([0-9a-fA-F]+);/g, (_, h: string) =>
       String.fromCodePoint(parseInt(h, 16)),
     )
@@ -22,7 +31,9 @@ function text(s: string): string {
 }
 
 function outer(html: string, start: number): El {
-  const open = /^<[^>]*>/.exec(html.slice(start));
+  const open = new RegExp(`^<[a-zA-Z][^\\s>/]*${TAG_REST}`).exec(
+    html.slice(start),
+  );
   if (!open) throw new Error(`no tag at ${start}`);
   const tag = open[0];
   const name = /^<([^\s>/]+)/.exec(tag)?.[1].toLowerCase() ?? '';
@@ -43,9 +54,9 @@ function outer(html: string, start: number): El {
 }
 
 function allElements(fragment: string): El[] {
-  return [...fragment.matchAll(/<[a-zA-Z][^\s>/]*(?=[\s>/])[^>]*>/g)].map((m) =>
-    outer(fragment, m.index),
-  );
+  return [
+    ...fragment.matchAll(new RegExp(`<[a-zA-Z][^\\s>/]*${TAG_REST}`, 'g')),
+  ].map((m) => outer(fragment, m.index));
 }
 
 function elementsWithId(html: string, id: string): El[] {
@@ -57,8 +68,10 @@ function classes(tag: string): string[] {
 }
 
 function links(fragment: string) {
-  return [...fragment.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/g)].map((m) => {
-    const tag = /^<a\b[^>]*>/.exec(m[0])?.[0] ?? '';
+  return [
+    ...fragment.matchAll(new RegExp(`<a${TAG_REST}[\\s\\S]*?</a\\s*>`, 'gi')),
+  ].map((m) => {
+    const tag = startTags(m[0], 'a')[0] ?? '';
     const a = attrs(tag);
     return {
       tag,
@@ -93,7 +106,7 @@ describe('dist: トップの Hero と About', () => {
     expect(top[0].end).toBeLessThanOrEqual(main.end);
     expect(about[0].start).toBeGreaterThan(main.start);
     expect(about[0].end).toBeLessThanOrEqual(main.end);
-    expect(/^<section\b/.test(top[0].tag)).toBe(true);
+    expect(/^<section\b/i.test(top[0].tag)).toBe(true);
   });
 
   const h1Tags = startTags(html, 'h1');
@@ -198,12 +211,12 @@ describe('dist: トップの Hero と About', () => {
   });
 
   it('AC-13: about の h2 は About', () => {
-    const h2 = allElements(aboutHtml).filter((e) => /^<h2\b/.test(e.tag));
+    const h2 = allElements(aboutHtml).filter((e) => /^<h2\b/i.test(e.tag));
     expect(h2).toHaveLength(1);
     expect(text(h2[0].html)).toBe('About');
   });
 
-  const ps = allElements(aboutHtml).filter((e) => /^<p\b/.test(e.tag));
+  const ps = allElements(aboutHtml).filter((e) => /^<p\b/i.test(e.tag));
 
   it('AC-14: about の p は resume.about と同じ', () => {
     expect(ps.map((e) => text(e.html))).toEqual(resume.about);
