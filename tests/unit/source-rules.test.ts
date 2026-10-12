@@ -24,6 +24,10 @@ const CLASS_RULES: RegExp[] = [
   START + 'rounded-full' + END,
   START + COLOR_PREFIX + '-' + PALETTE + '-\\d' + TAIL + '*',
   START + COLOR_PREFIX + '-' + ARBITRARY_COLOR,
+  START + 'transform' + TAIL + '*',
+  START + 'backdrop-blur' + TAIL + '*',
+  START + '-?rotate-' + TAIL + '+',
+  START + '-?scale-' + TAIL + '+',
 ].map((p) => new RegExp(p, 'g'));
 
 function blankCssDeclarations(css: string): string {
@@ -72,6 +76,14 @@ describe('findClassViolations', () => {
     'hover:animate-bounce',
     '<div class="md:rounded-full">',
     '<div class="text-red-500/50 p-2">',
+    'transform',
+    'transform-gpu',
+    'backdrop-blur',
+    'backdrop-blur-sm',
+    'rotate-45',
+    'hover:-rotate-3',
+    'scale-105',
+    'hover:scale-110',
   ])('違反: %s', (input) => {
     expect(findClassViolations(input)).not.toEqual([]);
   });
@@ -90,6 +102,8 @@ describe('findClassViolations', () => {
     'shadow-red-500',
     'text-[14px]',
     'transition',
+    'grayscale-0',
+    'text-transform-none',
   ])('違反でない: %s', (input) => {
     expect(findClassViolations(input)).toEqual([]);
   });
@@ -101,6 +115,16 @@ describe('findClassViolations', () => {
         true,
       ),
     ).toEqual([]);
+  });
+
+  it('CSS のプロパティ名の transform は判定から外す', () => {
+    expect(findClassViolations('a { transform: none; }', true)).toEqual([]);
+  });
+
+  it('CSS の @apply の scale は判定する', () => {
+    expect(findClassViolations('@apply scale-105;', true)).toEqual([
+      'scale-105',
+    ]);
   });
 
   it('CSS の @apply は判定する', () => {

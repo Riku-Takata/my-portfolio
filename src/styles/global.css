@@ -1,1 +1,11 @@
 @import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/jetbrains-mono";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans:
+    "Geist Variable", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+}
