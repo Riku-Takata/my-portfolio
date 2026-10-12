@@ -11,8 +11,14 @@ import FileText from '../components/icons/FileText.astro';
 import ArrowRight from '../components/icons/ArrowRight.astro';
 import ExternalLink from '../components/icons/ExternalLink.astro';
 import { SITE_NAME } from '../lib/site';
+import { resume } from '../content/resume';
 ---
-<BaseLayout title={SITE_NAME} description={`${SITE_NAME} のポートフォリオ(仮)`}>
+<BaseLayout
+  title="高田 莉玖 (Riku Takata) | Portfolio"
+  description={resume.profile.summary}
+  ogImage="/og/index.png"
+  type="website"
+>
   {/* T-012 で置き換えるデモ */}
   <main>
     <Container>
