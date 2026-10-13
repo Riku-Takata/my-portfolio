@@ -1,40 +1,19 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Container from '../components/common/Container.astro';
-import Section from '../components/common/Section.astro';
-import Badge from '../components/ui/Badge.astro';
-import LinkButton from '../components/ui/LinkButton.astro';
-import Github from '../components/icons/Github.astro';
-import X from '../components/icons/X.astro';
-import Mail from '../components/icons/Mail.astro';
-import FileText from '../components/icons/FileText.astro';
-import ArrowRight from '../components/icons/ArrowRight.astro';
-import ExternalLink from '../components/icons/ExternalLink.astro';
-import { SITE_NAME } from '../lib/site';
+import Hero from '../components/sections/Hero.astro';
+import About from '../components/sections/About.astro';
 import { resume } from '../content/resume';
+
+const { nameJa, nameEn } = resume.profile;
 ---
 <BaseLayout
-  title="高田 莉玖 (Riku Takata) | Portfolio"
+  title={`${nameJa} (${nameEn}) | Portfolio`}
   description={resume.profile.summary}
   ogImage="/og/index.png"
   type="website"
 >
-  {/* T-012 で置き換えるデモ */}
-  <main>
-    <Container>
-      <h1 class="text-3xl font-semibold tracking-tight">{SITE_NAME}</h1>
-    </Container>
-    <Section id="about" label="About">
-      <p>部品の確認用デモです。</p>
-      <Badge>TypeScript</Badge>
-      <LinkButton href="https://github.com/Riku-Takata">
-        <Github />GitHub<ExternalLink />
-      </LinkButton>
-      <LinkButton href="http://example.com/"><X />X</LinkButton>
-      <LinkButton href="/resume.pdf"><FileText />Resume</LinkButton>
-      <LinkButton href="mailto:RikuChestnut66@gmail.com"><Mail />Mail</LinkButton>
-      <LinkButton href="#about"><ArrowRight />About</LinkButton>
-      <p data-demo="icon-sized"><ArrowRight class="size-6" /></p>
-    </Section>
+  <main class="pb-16">
+    <Hero profile={resume.profile} />
+    <About paragraphs={resume.about} />
   </main>
 </BaseLayout>
