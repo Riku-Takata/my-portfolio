@@ -247,36 +247,43 @@ describe('fetchLatestArticles と ZENN_OFFLINE', () => {
     vi.unstubAllEnvs();
   });
 
-  it('ZENN_OFFLINE=1 なら fetch も warn もせず [] を返す', async () => {
+  it('AC-1: ZENN_OFFLINE=1 なら fetch も warn もせず [] を返す', async () => {
     vi.stubEnv('ZENN_OFFLINE', '1');
     await expect(fetchLatestArticles()).resolves.toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(warn).not.toHaveBeenCalled();
   });
 
-  it('呼ぶたびに ZENN_OFFLINE を読む', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ articles: [] }));
+  it('AC-2: import した後でも、呼ぶたびに ZENN_OFFLINE を読む', async () => {
     vi.stubEnv('ZENN_OFFLINE', '1');
-    await fetchLatestArticles();
+    await expect(fetchLatestArticles()).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(0);
-    vi.unstubAllEnvs();
-    await fetchLatestArticles();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it.each(['', '0', 'true'])('ZENN_OFFLINE=%j なら fetch する', async (v) => {
+    vi.stubEnv('ZENN_OFFLINE', undefined);
     fetchMock.mockResolvedValue(jsonResponse({ articles: [] }));
-    vi.stubEnv('ZENN_OFFLINE', v);
     await fetchLatestArticles();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(calledUrl().pathname).toBe('/api/articles');
   });
 
-  it('ZENN_OFFLINE=1 でも引数が不正なら reject する', async () => {
+  it.each([undefined, '', '0', 'true'])(
+    'AC-3: ZENN_OFFLINE=%j なら fetch を1回呼ぶ',
+    async (v) => {
+      vi.stubEnv('ZENN_OFFLINE', v);
+      fetchMock.mockResolvedValue(jsonResponse({ articles: [] }));
+      await fetchLatestArticles();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(calledUrl().origin).toBe('https://zenn.dev');
+      expect(calledUrl().pathname).toBe('/api/articles');
+    },
+  );
+
+  it('AC-24: ZENN_OFFLINE=1 でも引数が不正なら同じメッセージで reject する', async () => {
     vi.stubEnv('ZENN_OFFLINE', '1');
-    await expect(async () =>
-      fetchLatestArticles('riku_takata', 0),
-    ).rejects.toThrow();
-    await expect(async () => fetchLatestArticles('', 5)).rejects.toThrow();
+    await expect(fetchLatestArticles('riku_takata', 0)).rejects.toThrow(
+      'count は 1 以上の整数にする: 0',
+    );
+    await expect(fetchLatestArticles('', 5)).rejects.toThrow(
+      'username は空にできない',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

@@ -6,7 +6,7 @@ export type ZennArticle = { title: string; url: string; publishedAt: string };
 const ZENN_ORIGIN = 'https://zenn.dev';
 const TIMEOUT_MS = 10000;
 
-// ビルド時に Zenn の最新記事を取る。取得に失敗したら warn を1回出して [] を返す
+// ビルド時に Zenn の最新記事を取る。取得に失敗したら warn を1回出して [] を返す。ZENN_OFFLINE=1 なら取得せず []
 export async function fetchLatestArticles(
   username: string = ZENN_USERNAME,
   count: number = 5,

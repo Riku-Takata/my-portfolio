@@ -74,7 +74,7 @@ describe('Footer', () => {
       expect(h.slice(f.start, f.end)).not.toMatch(/<a(?=[\s>/])/i);
     });
 
-    it('AC-18: border-t と text-zinc-500 と Container', () => {
+    it('AC-18: border-t と text-zinc-500 があり、mx-auto max-w-2xl の div で包む', () => {
       const h = html();
       const [f] = footers(h);
       const cls = (attrs(f.tag).get('class') ?? '').split(/\s+/);
