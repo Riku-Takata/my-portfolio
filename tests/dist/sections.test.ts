@@ -1,3 +1,4 @@
+// T-014 の受け入れ基準 8〜17(配置、#skills、#experience)をビルド後の HTML で確かめる。期間と種別の関数の振る舞いは tests/unit/format.test.ts で確かめる
 import { assert, describe, expect, it } from 'vitest';
 import { resume } from '../../src/content/resume';
 import {
@@ -102,7 +103,7 @@ function page() {
 }
 
 describe('dist/index.html: skills と experience', () => {
-  it('AC-8: section が1つずつあり、main の中にある', () => {
+  it('#skills と #experience は section で、ただ1つの main の中にある', () => {
     const { html, skills, experience } = page();
     expect(skills.tag.startsWith('<section')).toBe(true);
     expect(experience.tag.startsWith('<section')).toBe(true);
@@ -114,7 +115,7 @@ describe('dist/index.html: skills と experience', () => {
     }
   });
 
-  it('AC-9: top < about < projects < skills < experience の順', () => {
+  it('id は top, about, projects, skills, experience の順に出てくる', () => {
     const { html } = page();
     const starts = ['top', 'about', 'projects', 'skills', 'experience'].map(
       (id) => {
@@ -126,7 +127,7 @@ describe('dist/index.html: skills と experience', () => {
     expect([...starts].sort((a, b) => a - b)).toEqual(starts);
   });
 
-  it('AC-10: h2 が1つずつある', () => {
+  it('#skills と #experience の h2 が1つずつあり、見出しの文字が合う', () => {
     const { skills, experience } = page();
     const s = inner(skills, 'h2');
     const e = inner(experience, 'h2');
@@ -136,7 +137,7 @@ describe('dist/index.html: skills と experience', () => {
     expect(text(e[0].html)).toBe('Experience & Education');
   });
 
-  it('AC-11: dl の dt がカテゴリと一致する', () => {
+  it('#skills の dl の dt が resume.skills の category と一致する', () => {
     const { skills } = page();
     const dls = inner(skills, 'dl');
     expect(dls).toHaveLength(1);
@@ -144,7 +145,7 @@ describe('dist/index.html: skills と experience', () => {
     expect(dts).toEqual(resume.skills.map((s) => norm(s.category)));
   });
 
-  it('AC-12: dd の Badge が items と一致する', () => {
+  it('#skills の dd の Badge が resume.skills の items と同じ順に並ぶ', () => {
     const { skills } = page();
     const dl = inner(skills, 'dl')[0];
     const dds = inner(dl, 'dd');
@@ -164,7 +165,7 @@ describe('dist/index.html: skills と experience', () => {
     });
   });
 
-  it('AC-13: 評価の表示がない', () => {
+  it('#skills に評価の表示(%・星・progress・meter・style)がない', () => {
     const { skills } = page();
     const t = text(skills.html);
     for (const ch of ['%', '★', '☆']) expect(t).not.toContain(ch);
@@ -178,7 +179,7 @@ describe('dist/index.html: skills と experience', () => {
     }
   });
 
-  it('AC-14: ol の直下の li が経歴の件数と同じ', () => {
+  it('#experience の ol の直下の li が resume.experience の件数と同じ', () => {
     const { experience } = page();
     const ols = inner(experience, 'ol');
     expect(ols).toHaveLength(1);
@@ -190,7 +191,7 @@ describe('dist/index.html: skills と experience', () => {
     expect(direct).toHaveLength(resume.experience.length);
   });
 
-  it('AC-15: time の datetime と表示が期間と一致する', () => {
+  it('#experience の各 li の time の datetime と表示が新しい順の経歴と一致する', () => {
     const { experience } = page();
     const sorted = sortExperience(resume.experience);
     const lis = inner(inner(experience, 'ol')[0], 'li');
@@ -205,7 +206,7 @@ describe('dist/index.html: skills と experience', () => {
     });
   });
 
-  it('AC-16: li に種別・title・org・note が含まれる', () => {
+  it('#experience の各 li に種別・title・org・note が含まれる', () => {
     const { experience } = page();
     const sorted = sortExperience(resume.experience);
     const lis = inner(inner(experience, 'ol')[0], 'li');
@@ -220,7 +221,7 @@ describe('dist/index.html: skills と experience', () => {
     });
   });
 
-  it('AC-17: ol の縦線だけで装飾する', () => {
+  it('#experience は ol の縦線だけで装飾する', () => {
     const { experience } = page();
     const ol = inner(experience, 'ol')[0];
     const c = classes(ol.tag);
