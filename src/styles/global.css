@@ -13,3 +13,12 @@
     "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 }
+
+/* Shiki が style 属性に書くライトの色を、OS がダークのときだけ上書きする */
+@media (prefers-color-scheme: dark) {
+  .astro-code,
+  .astro-code span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+  }
+}
