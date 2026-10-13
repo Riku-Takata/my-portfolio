@@ -1,0 +1,20 @@
+---
+import type { z } from 'astro/zod';
+import type { projectSchema } from '../../lib/schemas';
+import Section from '../common/Section.astro';
+import ProjectCard from '../ui/ProjectCard.astro';
+
+interface Props {
+  projects: { id: string; data: z.output<typeof projectSchema> }[];
+}
+
+const { projects } = Astro.props;
+---
+
+<Section id="projects" label="Featured Projects">
+  <div class="mt-6 flex flex-col gap-6">
+    {projects.map((project) => (
+      <ProjectCard project={project} />
+    ))}
+  </div>
+</Section>

@@ -2,9 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
 import About from '../components/sections/About.astro';
+import ProjectsList from '../components/sections/ProjectsList.astro';
+import { getCollection } from 'astro:content';
+import { selectFeatured } from '../lib/projects';
 import { resume } from '../content/resume';
 
 const { nameJa, nameEn } = resume.profile;
+const featured = selectFeatured(await getCollection('projects'));
 ---
 <BaseLayout
   title={`${nameJa} (${nameEn}) | Portfolio`}
@@ -15,5 +19,6 @@ const { nameJa, nameEn } = resume.profile;
   <main class="pb-16">
     <Hero profile={resume.profile} />
     <About paragraphs={resume.about} />
+    <ProjectsList projects={featured} />
   </main>
 </BaseLayout>
