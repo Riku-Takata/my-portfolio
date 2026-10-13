@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resume } from '../../src/content/resume';
 import {
-  type ExperienceKind,
   experienceKindLabel,
   formatExperiencePeriod,
   sortExperience,
@@ -212,12 +211,12 @@ describe('dist/index.html: skills と experience', () => {
     const lis = inner(inner(experience, 'ol')[0], 'li');
     lis.forEach((li, i) => {
       const t = text(li.html);
-      const e: { title: string; org: string; kind: ExperienceKind; note?: string } =
-        sorted[i];
+      const e = sorted[i];
       expect(t).toContain(norm(experienceKindLabel(e.kind)));
       expect(t).toContain(norm(e.title));
       expect(t).toContain(norm(e.org));
-      if (e.note) expect(t).toContain(norm(e.note));
+      const note = (e as { note?: string }).note;
+      if (note) expect(t).toContain(norm(note));
     });
   });
 

@@ -1,11 +1,8 @@
 ---
+import type { ExperienceKind } from '../../lib/format';
+import { experienceKindLabel } from '../../lib/format';
+import { formatExperiencePeriod, sortExperience } from '../../lib/format';
 import Section from '../common/Section.astro';
-import {
-  experienceKindLabel,
-  formatExperiencePeriod,
-  sortExperience,
-  type ExperienceKind,
-} from '../../lib/format';
 
 interface Props {
   experience: readonly {

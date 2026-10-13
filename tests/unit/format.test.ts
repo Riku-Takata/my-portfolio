@@ -180,7 +180,7 @@ describe('format.ts のモジュール境界', () => {
 });
 
 describe('formatExperiencePeriod', () => {
-  it('start と end を en dash でつなぐ', () => {
+  it('AC-1: start と end を en dash でつなぐ', () => {
     const result = formatExperiencePeriod({ start: '2024-04', end: '2026-03' });
     expect(result).toBe('2024.04 – 2026.03');
     expect(result).toContain(' – ');
@@ -188,13 +188,13 @@ describe('formatExperiencePeriod', () => {
     expect(result).not.toContain('—');
   });
 
-  it('end が present なら Present', () => {
+  it('AC-2: end が present なら Present', () => {
     expect(formatExperiencePeriod({ start: '2024-04', end: 'present' })).toBe(
       '2024.04 – Present',
     );
   });
 
-  it('end が未指定なら start だけ', () => {
+  it('AC-3: end が未指定なら start だけ', () => {
     expect(formatExperiencePeriod({ start: '2024-04' })).toBe('2024.04');
     expect(formatExperiencePeriod({ start: '2024-04', end: undefined })).toBe(
       '2024.04',
@@ -202,7 +202,7 @@ describe('formatExperiencePeriod', () => {
     expect(formatExperiencePeriod({ start: '2024-04' })).not.toContain('–');
   });
 
-  it('YYYY-MM でない値は値を含むメッセージで throw する', () => {
+  it('AC-4: YYYY-MM でない値は値を含むメッセージで throw する', () => {
     expect(() =>
       formatExperiencePeriod({ start: '2024/04', end: '2026-03' }),
     ).toThrow('2024/04');
@@ -211,7 +211,7 @@ describe('formatExperiencePeriod', () => {
     ).toThrow('2026-3');
   });
 
-  it('start が end より後なら両方の値を含めて throw する', () => {
+  it('AC-23: start が end より後なら両方の値を含めて throw する', () => {
     let error: unknown;
     try {
       formatExperiencePeriod({ start: '2026-04', end: '2025-03' });
@@ -224,7 +224,7 @@ describe('formatExperiencePeriod', () => {
     expect(message).toContain('2025-03');
   });
 
-  it('同じ年月は throw しない。present は start と比べない', () => {
+  it('AC-23: 同じ年月は throw しない。present は start と比べない', () => {
     expect(formatExperiencePeriod({ start: '2024-04', end: '2024-04' })).toBe(
       '2024.04 – 2024.04',
     );
@@ -240,7 +240,7 @@ describe('experienceKindLabel', () => {
     ['internship', 'Internship'],
     ['presentation', 'Presentation'],
     ['work', 'Work'],
-  ] as const)('%s は %s', (kind, label) => {
+  ] as const)('AC-5: %s は %s', (kind, label) => {
     expect(experienceKindLabel(kind)).toBe(label);
   });
 });
