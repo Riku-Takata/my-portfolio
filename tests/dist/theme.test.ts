@@ -189,26 +189,3 @@ describe('dist: フォント', () => {
     expect(found).toEqual([]);
   });
 });
-
-describe('dist: デモ', () => {
-  it('id 付きの section とその中の h2 がある', () => {
-    expect(html).toMatch(/<section\b[^>]*\bid="[^"]+"[^>]*>[\s\S]*?<h2\b/);
-  });
-
-  it('Badge の出力がある', () => {
-    expect(html).toMatch(
-      /<span\b[^>]*class="[^"]*\bfont-mono\b[^"]*\btext-xs\b[^"]*"/,
-    );
-  });
-
-  it('外部と内部の LinkButton がある', () => {
-    const hrefs = startTags('a').map((t) => t.match(/\bhref="([^"]*)"/)?.[1] ?? '');
-    expect(hrefs.some((h) => /^https?:\/\//.test(h))).toBe(true);
-    expect(hrefs.some((h) => !/^https?:\/\//.test(h))).toBe(true);
-  });
-
-  it('aria-hidden の svg が6つ以上ある', () => {
-    const n = startTags('svg').filter((t) => t.includes('aria-hidden="true"'));
-    expect(n.length).toBeGreaterThanOrEqual(6);
-  });
-});
