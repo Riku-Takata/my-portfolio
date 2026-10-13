@@ -91,7 +91,7 @@
     ├── assets/
     │   ├── diagrams/           # <slug>-architecture.mmd / .svg
     │   ├── projects/<slug>/    # デモ画像・GIF (astro:assets で読む)
-    │   └── fonts/              # OGP 用 NotoSansJP-Regular.ttf, NotoSansJP-Bold.ttf, OFL.txt
+    │   └── fonts/              # OGP 用 NotoSansJP-Regular.otf, NotoSansJP-Bold.otf, OFL.txt
     ├── components/
     │   ├── common/             # Header, Footer, Container, Section
     │   ├── sections/           # Hero, About, ProjectsList, Skills, Experience, Articles
