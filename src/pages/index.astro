@@ -3,6 +3,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
 import About from '../components/sections/About.astro';
 import ProjectsList from '../components/sections/ProjectsList.astro';
+import Skills from '../components/sections/Skills.astro';
+import Experience from '../components/sections/Experience.astro';
 import { getCollection } from 'astro:content';
 import { selectFeatured } from '../lib/projects';
 import { resume } from '../content/resume';
@@ -20,5 +22,7 @@ const featured = selectFeatured(await getCollection('projects'));
     <Hero profile={resume.profile} />
     <About paragraphs={resume.about} />
     <ProjectsList projects={featured} />
+    <Skills skills={resume.skills} />
+    <Experience experience={resume.experience} />
   </main>
 </BaseLayout>
