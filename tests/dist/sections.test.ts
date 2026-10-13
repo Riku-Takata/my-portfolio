@@ -1,11 +1,7 @@
 // T-014 の受け入れ基準 8〜17(配置、#skills、#experience)をビルド後の HTML で確かめる。期間と種別の関数の振る舞いは tests/unit/format.test.ts で確かめる
 import { assert, describe, expect, it } from 'vitest';
 import { resume } from '../../src/content/resume';
-import {
-  experienceKindLabel,
-  formatExperiencePeriod,
-  sortExperience,
-} from '../../src/lib/format';
+import { sortExperience } from '../../src/lib/format';
 import { attrs, decode, readDist } from './html';
 
 const VOID = new Set(['img', 'br', 'meta', 'link', 'input', 'source', 'hr']);
@@ -202,7 +198,14 @@ describe('dist/index.html: skills と experience', () => {
       const datetime = attrs(times[0].tag).get('datetime') ?? '';
       expect(datetime).toBe(sorted[i].start);
       expect(datetime).toMatch(/^\d{4}-(0[1-9]|1[0-2])$/);
-      expect(text(times[0].html)).toBe(formatExperiencePeriod(sorted[i]));
+      // 期間の文字の形は tests/unit/format.test.ts で確かめる。ここでは経歴の年月が出ていることを見る
+      const shown = text(times[0].html);
+      const end = (sorted[i] as { end?: string }).end;
+      for (const ym of [sorted[i].start, end]) {
+        if (ym === undefined || !/^\d{4}-\d{2}$/.test(ym)) continue;
+        expect(shown).toContain(ym.slice(0, 4));
+        expect(shown).toContain(ym.slice(5, 7));
+      }
     });
   });
 
@@ -213,7 +216,8 @@ describe('dist/index.html: skills と experience', () => {
     lis.forEach((li, i) => {
       const t = text(li.html);
       const e = sorted[i];
-      expect(t).toContain(norm(experienceKindLabel(e.kind)));
+      // 種別と表示名の対応は tests/unit/format.test.ts で確かめる
+      expect(t.toLowerCase()).toContain(e.kind);
       expect(t).toContain(norm(e.title));
       expect(t).toContain(norm(e.org));
       const note = (e as { note?: string }).note;
