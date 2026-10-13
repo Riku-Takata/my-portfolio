@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { assert, describe, expect, it } from 'vitest';
 import { resume } from '../../src/content/resume';
 import {
   experienceKindLabel,
@@ -19,8 +19,8 @@ function startTags(html: string, name: string): string[] {
 }
 
 interface El {
-  start: number;
-  end: number;
+  from: number;
+  to: number;
   tag: string;
   html: string;
 }
@@ -44,11 +44,11 @@ function outer(html: string, start: number): El {
   const open = new RegExp(`^<[a-zA-Z][^\\s>/]*${TAG_REST}`).exec(
     html.slice(start),
   );
-  if (!open) throw new Error(`no tag at ${start}`);
+  assert(open, `no tag at ${start}`);
   const tag = open[0];
   const name = /^<([^\s>/]+)/.exec(tag)?.[1].toLowerCase() ?? '';
   if (VOID.has(name) || tag.endsWith('/>')) {
-    return { start, end: start + tag.length, tag, html: tag };
+    return { from: start, to: start + tag.length, tag, html: tag };
   }
   const re = new RegExp(`<(/?)${name}(?=[\\s>/])[^>]*>`, 'gi');
   re.lastIndex = start;
@@ -57,10 +57,10 @@ function outer(html: string, start: number): El {
     depth += m[1] === '/' ? -1 : 1;
     if (depth === 0) {
       const end = m.index + m[0].length;
-      return { start, end, tag, html: html.slice(start, end) };
+      return { from: start, to: end, tag, html: html.slice(start, end) };
     }
   }
-  throw new Error(`unclosed <${name}> at ${start}`);
+  return assert.fail(`unclosed <${name}> at ${start}`);
 }
 
 function allElements(fragment: string): El[] {
@@ -109,8 +109,8 @@ describe('dist/index.html: skills と experience', () => {
     expect(startTags(html, 'main')).toHaveLength(1);
     const main = outer(html, html.search(/<main(?=[\s>/])/i));
     for (const el of [skills, experience]) {
-      expect(el.start).toBeGreaterThan(main.start);
-      expect(el.end).toBeLessThan(main.end);
+      expect(el.from).toBeGreaterThan(main.from);
+      expect(el.to).toBeLessThan(main.to);
     }
   });
 
@@ -120,7 +120,7 @@ describe('dist/index.html: skills と experience', () => {
       (id) => {
         const els = elementsWithId(html, id);
         expect(els, id).toHaveLength(1);
-        return els[0].start;
+        return els[0].from;
       },
     );
     expect([...starts].sort((a, b) => a - b)).toEqual(starts);
@@ -185,7 +185,7 @@ describe('dist/index.html: skills と experience', () => {
     const lis = inner(ols[0], 'li');
     const direct = lis.filter(
       (li) =>
-        !lis.some((o) => o !== li && o.start < li.start && li.end <= o.end),
+        !lis.some((o) => o !== li && o.from < li.from && li.to <= o.to),
     );
     expect(direct).toHaveLength(resume.experience.length);
   });
@@ -234,7 +234,7 @@ describe('dist/index.html: skills と experience', () => {
     const forbidden =
       /^(border|border-.*|dark:border-.*|rounded.*|shadow.*|ring.*|bg-.*|dark:bg-.*)$/;
     for (const el of allElements(experience.html)) {
-      if (el.start === ol.start) continue;
+      if (el.from === ol.from) continue;
       for (const token of classes(el.tag)) {
         expect(token, el.tag).not.toMatch(forbidden);
       }
