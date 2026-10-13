@@ -50,6 +50,41 @@ export function formatDate(value: string): string {
   return `${jst.getUTCFullYear()}.${pad2(jst.getUTCMonth() + 1)}.${pad2(jst.getUTCDate())}`;
 }
 
+export type ExperienceKind =
+  'education' | 'internship' | 'presentation' | 'work';
+
+const EXPERIENCE_KIND_LABELS: Record<ExperienceKind, string> = {
+  education: 'Education',
+  internship: 'Internship',
+  presentation: 'Presentation',
+  work: 'Work',
+};
+
+// 種別の表示名
+export function experienceKindLabel(kind: ExperienceKind): string {
+  return EXPERIENCE_KIND_LABELS[kind];
+}
+
+// 経歴の期間を '2024.04 – 2026.03' にする。end が 'present' なら 'Present'、未指定なら start だけ
+export function formatExperiencePeriod(period: {
+  start: string;
+  end?: string;
+}): string {
+  const start = parseYearMonth(period.start);
+  const startText = `${start.year}.${start.month}`;
+  if (period.end === undefined) return startText;
+  if (period.end === 'present') {
+    return `${startText}${EN_DASH_SEPARATOR}Present`;
+  }
+  const end = parseYearMonth(period.end);
+  if (period.start > period.end) {
+    throw new Error(
+      `start が end より後です: start=${JSON.stringify(period.start)}, end=${JSON.stringify(period.end)}`,
+    );
+  }
+  return `${startText}${EN_DASH_SEPARATOR}${end.year}.${end.month}`;
+}
+
 // start の新しい順に並べた新しい配列を返す(安定ソート。元の配列は変えない)
 export function sortExperience<T extends { start: string }>(
   items: readonly T[],

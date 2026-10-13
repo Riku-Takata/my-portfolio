@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  experienceKindLabel,
+  formatExperiencePeriod,
   formatPeriod,
   formatYearMonth,
   formatDate,
@@ -174,5 +176,71 @@ describe('format.ts のモジュール境界', () => {
       ...source.matchAll(/(?:from\s+|import\s*\(\s*)['"](astro:[^'"]*)['"]/g),
     ].map((m) => m[1]);
     expect(matches, `src/lib/format.ts: ${matches.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('formatExperiencePeriod', () => {
+  it('start と end を en dash でつなぐ', () => {
+    const result = formatExperiencePeriod({ start: '2024-04', end: '2026-03' });
+    expect(result).toBe('2024.04 – 2026.03');
+    expect(result).toContain(' – ');
+    expect(result).not.toContain('-');
+    expect(result).not.toContain('—');
+  });
+
+  it('end が present なら Present', () => {
+    expect(formatExperiencePeriod({ start: '2024-04', end: 'present' })).toBe(
+      '2024.04 – Present',
+    );
+  });
+
+  it('end が未指定なら start だけ', () => {
+    expect(formatExperiencePeriod({ start: '2024-04' })).toBe('2024.04');
+    expect(formatExperiencePeriod({ start: '2024-04', end: undefined })).toBe(
+      '2024.04',
+    );
+    expect(formatExperiencePeriod({ start: '2024-04' })).not.toContain('–');
+  });
+
+  it('YYYY-MM でない値は値を含むメッセージで throw する', () => {
+    expect(() =>
+      formatExperiencePeriod({ start: '2024/04', end: '2026-03' }),
+    ).toThrow('2024/04');
+    expect(() =>
+      formatExperiencePeriod({ start: '2024-04', end: '2026-3' }),
+    ).toThrow('2026-3');
+  });
+
+  it('start が end より後なら両方の値を含めて throw する', () => {
+    let error: unknown;
+    try {
+      formatExperiencePeriod({ start: '2026-04', end: '2025-03' });
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(Error);
+    const message = (error as Error).message;
+    expect(message).toContain('2026-04');
+    expect(message).toContain('2025-03');
+  });
+
+  it('同じ年月は throw しない。present は start と比べない', () => {
+    expect(formatExperiencePeriod({ start: '2024-04', end: '2024-04' })).toBe(
+      '2024.04 – 2024.04',
+    );
+    expect(formatExperiencePeriod({ start: '2099-01', end: 'present' })).toBe(
+      '2099.01 – Present',
+    );
+  });
+});
+
+describe('experienceKindLabel', () => {
+  it.each([
+    ['education', 'Education'],
+    ['internship', 'Internship'],
+    ['presentation', 'Presentation'],
+    ['work', 'Work'],
+  ] as const)('%s は %s', (kind, label) => {
+    expect(experienceKindLabel(kind)).toBe(label);
   });
 });
