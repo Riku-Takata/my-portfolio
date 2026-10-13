@@ -18,6 +18,11 @@ export async function fetchLatestArticles(
     throw new Error('username は空にできない');
   }
 
+  // ZENN_OFFLINE=1 のときは取得しない(空のときの表示をネットワークによらず確かめるため)
+  if (process.env.ZENN_OFFLINE === '1') {
+    return [];
+  }
+
   const encoded = encodeURIComponent(username);
   const endpoint = `${ZENN_ORIGIN}/api/articles?username=${encoded}&order=latest&count=${count}`;
 

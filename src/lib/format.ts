@@ -50,6 +50,11 @@ export function formatDate(value: string): string {
   return `${jst.getUTCFullYear()}.${pad2(jst.getUTCMonth() + 1)}.${pad2(jst.getUTCDate())}`;
 }
 
+// JST の西暦を返す。実行環境の TZ には依存しない
+export function jstYear(date: Date = new Date()): number {
+  return new Date(date.getTime() + JST_OFFSET_MS).getUTCFullYear();
+}
+
 // start の新しい順に並べた新しい配列を返す(安定ソート。元の配列は変えない)
 export function sortExperience<T extends { start: string }>(
   items: readonly T[],

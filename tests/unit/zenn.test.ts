@@ -241,3 +241,42 @@ describe('fetchLatestArticles', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe('fetchLatestArticles と ZENN_OFFLINE', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('ZENN_OFFLINE=1 なら fetch も warn もせず [] を返す', async () => {
+    vi.stubEnv('ZENN_OFFLINE', '1');
+    await expect(fetchLatestArticles()).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('呼ぶたびに ZENN_OFFLINE を読む', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ articles: [] }));
+    vi.stubEnv('ZENN_OFFLINE', '1');
+    await fetchLatestArticles();
+    expect(fetchMock).toHaveBeenCalledTimes(0);
+    vi.unstubAllEnvs();
+    await fetchLatestArticles();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['', '0', 'true'])('ZENN_OFFLINE=%j なら fetch する', async (v) => {
+    fetchMock.mockResolvedValue(jsonResponse({ articles: [] }));
+    vi.stubEnv('ZENN_OFFLINE', v);
+    await fetchLatestArticles();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(calledUrl().pathname).toBe('/api/articles');
+  });
+
+  it('ZENN_OFFLINE=1 でも引数が不正なら reject する', async () => {
+    vi.stubEnv('ZENN_OFFLINE', '1');
+    await expect(async () =>
+      fetchLatestArticles('riku_takata', 0),
+    ).rejects.toThrow();
+    await expect(async () => fetchLatestArticles('', 5)).rejects.toThrow();
+  });
+});

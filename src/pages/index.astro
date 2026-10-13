@@ -3,12 +3,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
 import About from '../components/sections/About.astro';
 import ProjectsList from '../components/sections/ProjectsList.astro';
+import Articles from '../components/sections/Articles.astro';
+import { fetchLatestArticles } from '../lib/zenn';
 import { getCollection } from 'astro:content';
 import { selectFeatured } from '../lib/projects';
 import { resume } from '../content/resume';
 
 const { nameJa, nameEn } = resume.profile;
 const featured = selectFeatured(await getCollection('projects'));
+const articles = await fetchLatestArticles();
 ---
 <BaseLayout
   title={`${nameJa} (${nameEn}) | Portfolio`}
@@ -20,5 +23,6 @@ const featured = selectFeatured(await getCollection('projects'));
     <Hero profile={resume.profile} />
     <About paragraphs={resume.about} />
     <ProjectsList projects={featured} />
+    <Articles articles={articles} />
   </main>
 </BaseLayout>
