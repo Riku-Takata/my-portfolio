@@ -191,6 +191,7 @@ type Resume = {
 - レスポンスは `zennResponseSchema` で検証する。使う値は `articles[].title`、`slug`、`published_at`、`user.username` だけ。URL は `https://zenn.dev/${username}/articles/${slug}` で組み立てる。
 - タイムアウトは10秒(`AbortSignal.timeout`)。
 - **失敗しても(通信エラー、HTTP エラー、スキーマ違反)ビルドを止めない。** `console.warn` を出して空の配列を返す。空のときは一覧を出さず、「Zenn の記事一覧 →」のリンクだけを出す。
+- 環境変数 `ZENN_OFFLINE=1` のときは取得せずに空の配列を返す(空のときの表示を、ネットワークの有無によらず確かめるため)。
 - 理由: Zenn が落ちているときにプロジェクトの更新までデプロイできなくなるのを避ける。
 
 ### 図(`src/assets/diagrams/`)
@@ -201,8 +202,10 @@ type Resume = {
 
 ### OGP 用のフォント
 
-- `src/assets/fonts/` に Noto Sans JP の Regular と Bold の TTF を置き、ライセンスの `OFL.txt` も一緒に置く。
-- ビルド時に読むだけで、配信はしない。容量(各数 MB と思われる)は**未確認**。
+- `src/assets/fonts/` に Noto Sans JP の Regular と Bold を置き、ライセンスの `OFL.txt` も一緒に置く(2026-10-14 の見直しで配置済み)。
+  - 形式は Noto CJK の日本語のサブセット版 OTF(`notofonts/noto-cjk` の `Sans/SubsetOTF/JP/`)。Google Fonts の Noto Sans JP は可変フォントの TTF しかなく、satori は可変フォントを扱えないため。satori は OTF を読める。
+  - 容量は Regular 4.5MB、Bold 4.7MB。
+- ビルド時に読むだけで、配信はしない。
 
 ## 画面・機能(素案の各項目を、実装できる単位に)
 
@@ -294,23 +297,24 @@ type Resume = {
 
 ### F-08 Footer / Header(`common/`)
 
-- Footer: `© <ビルドした年> Riku Takata` だけにする。今の Footer にある `/privacy-policy` と `/terms-of-service` は存在しないページへのリンクなので消す。
-- Header: 詳細ページにだけ出す。左に `Riku Takata` を置き、`/` へリンクする。トップでは Hero が Header を兼ねる。
+- Footer: `© <ビルドした年> Riku Takata` だけにする。今の Footer にある `/privacy-policy` と `/terms-of-service` は存在しないページへのリンクなので消す。BaseLayout の `<slot />` の後に置き、全ページに出す。
+- Header: 詳細ページにだけ出す(`<header id="site-header">`)。左に `Riku Takata` を置き、`/` へリンクする。トップでは Hero が Header を兼ねる。
 
 ### F-09 プロジェクト詳細ページ(`pages/projects/[slug].astro` + `ProjectLayout.astro`)
 
 - `getStaticPaths` で、コレクションの全件(featured でないものも含む)のページを作る。
 - 見出しのブロック: h1 にタイトル、期間、`summary`、技術バッジ、リンク(Live Demo / GitHub Code)。
 - 本文: MDX を `prose prose-zinc dark:prose-invert max-w-none` で包む。
-  - 表は横にはみ出すとき、表だけを横スクロールにする(ページ全体は横にスクロールさせない)。
-  - コードブロックは Shiki の2テーマで、色の切り替えは CSS だけで行う。
+  - 表は横にはみ出すとき、表だけを横スクロールにする(ページ全体は横にスクロールさせない)。`components/mdx/Table.astro`(`<div class="overflow-x-auto">` で包む)を `<Content components={{ table: Table }} />` で当てる。
+  - コードブロックは Shiki の2テーマ(`github-light` / `github-dark`)で、色の切り替えは `global.css` の `prefers-color-scheme: dark` で `--shiki-dark` に切り替える CSS だけで行う。
+- 骨組み(ページ、Header、見出しのブロック)は T-016、本文の組版(prose、表、Shiki)は T-026 に分ける。
 - 末尾に `← Featured Projects へ戻る`(`/#projects`)を置く。
 
 ### F-10 Figure(`components/mdx/Figure.astro`)
 
-- props: `src`(`ImageMetadata`)、`alt`(必須)、`caption?`
-- `astro:assets` の `<Image>` で出し、`width` と `height` を付けて CLS を防ぐ。
-- 図の SVG は、ダークモードでも読めるように `bg-white rounded-md border p-4` の明るい板の上に置く。
+- props: `src`(SVG の import の結果)、`alt`(必須。空白だけならビルドを失敗させる)、`caption?`
+- `<img src={src.src} width height>` で出し、`width` と `height` を付けて CLS を防ぐ(`astro:assets` の `<Image>` は SVG を最適化しないので使わない)。
+- 図の SVG は、ダークモードでも読めるように明るい板の上に置く: `rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-100`(デザイン規律の zinc の中で決める。`bg-white` は使わない)。
 - `<figcaption>` は補足の文字で出す。
 
 ### F-11 OGP 画像(`pages/og/[slug].png.ts` + `lib/og.ts`)
@@ -328,7 +332,7 @@ type Resume = {
 - `@astrojs/sitemap` で `sitemap-index.xml` を出す。
 - `pages/robots.txt.ts`: `User-agent: *` / `Allow: /` / `Sitemap: <SITE_URL>/sitemap-index.xml`
 - `astro.config.mjs` の `site`
-  - `lib/site.ts` の `SITE_URL` と同じ値にする。
+  - `lib/site.ts` の `SITE_URL` を import して使う(URL を1か所にだけ書く)。
   - **本番のドメインはまだ決まっていない**。開発者が決める。それまでは `https://my-portfolio-riku-takata.vercel.app` のような仮の値に `TODO(content)` を付ける。
 
 ### F-13 定期再ビルド(`.github/workflows/rebuild.yml`)
@@ -536,3 +540,14 @@ type Resume = {
 7. **resume.pdf のメタデータ(作成者、ソフト名、パス)を消してから置く。**(採用:公開前のチェックで確かめる)
 8. **Zenn の取得が3日続けて失敗したら、GitHub Actions で通知する。** 今の設計では、取得に失敗しても気づきにくい。
 9. **GitHub Actions の schedule の停止条件(リポジトリが一定期間動かないと止まる)が本当なら、対策を考える。** たとえば `rebuild.yml` の実行状態を、たまに手で確かめる。
+
+## 設計の見直し(2026-10-14)
+
+T-014、T-015、T-016 が、実装では直せない理由で止まった(spec が `main` と比べる基準を作った、vitest で .astro を描画しようとした、原稿を書き換えないと確かめられない基準があった)。残りのタスクも同じ理由で止まらないよう、次のように決め直した。
+
+- **テストの分担**: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たない)。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。
+- **受け入れ基準は今の原稿のまま確かめる**: 「featured: false にしても」「site と SITE_URL が食い違うと」のような、原稿や設定を書き換えた別の状態を作らないと確かめられない基準は、「全 .mdx にページがある」「SITE_URL を1か所から読む」に言い換えた。
+- **比べる基準のブランチは renewal**。
+- **T-016 を2つに分けた**: 骨組み(T-016)と本文の組版(T-026)。T-018 は T-026 の後にする。
+- **決めずに残していた分岐を決めた**: Figure の板の色(zinc の中で決める)、Figure の出し方(`<img>`)、Articles の空の表示の確かめ方(`ZENN_OFFLINE=1`)、Footer の置き場所(BaseLayout)、Header の目印(`id="site-header"`)、OGP のフォント(サブセット版 OTF を配置済み)。
+- **既存のテストを変えるタスク**(T-025 の `<script>` の数え方)は、変えるファイルと変え方を request に書いた。
