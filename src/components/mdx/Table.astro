@@ -1,5 +1,10 @@
+---
+// 狭い画面では表を詰めずに、表の中だけを横スクロールさせる(列が1文字ずつ折り返さないよう最小の幅を持たせる)
+const { class: className, ...rest } = Astro.props;
+---
+
 <div class="overflow-x-auto">
-  <table {...Astro.props}>
+  <table class:list={['min-w-[36rem]', className]} {...rest}>
     <slot />
   </table>
 </div>

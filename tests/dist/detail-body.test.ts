@@ -223,6 +223,12 @@ describe('詳細ページの本文の組版', () => {
         }
       });
 
+      it('T-029: <table> の class に min-w- で始まるクラスがある(狭い画面では表の中だけを横スクロール)', () => {
+        for (const tag of startTags(html, 'table')) {
+          expect(classes(tag).some((c) => c.startsWith('min-w-'))).toBe(true);
+        }
+      });
+
       it('AC-6: 表の中身が失われない', () => {
         if (info.tableLines.length === 0) return;
         const tables = elements(html, 'table');
