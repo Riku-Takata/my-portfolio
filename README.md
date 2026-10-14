@@ -1,79 +1,122 @@
-<img width="1907" alt="スクリーンショット 2025-02-08 11 50 32" src="https://github.com/user-attachments/assets/609db646-a769-4cc2-ad31-e61a6a333a45" />
-
 # ポートフォリオサイト
 
 ## 概要
-このプロジェクトは、私のスキルや実績を紹介するためのポートフォリオサイトです。主に**Next.js**を使用し、デザインやアニメーションの表現にもこだわった構成となっています。
+
+Astro(`output: 'static'`)で作る静的サイトです。クライアントの JavaScript は出しません(Zero-JS)。例外は Vercel Analytics(`@vercel/analytics/astro`)だけです。JSON-LD は実行されないので例外に数えません。Zenn の記事はビルドのときに取得します。
 
 ## 技術スタック
-- **フロントエンド:** Next.js, React, TypeScript
-- **スタイリング:** Tailwind CSS, SASS, CSSアニメーション
-- **ホスティング:** Vercel
-- **その他:** ChatGPT, GitHub Actions（CI/CD）
 
-## 主な機能
-- **自己紹介セクション:** スキルセットやプロフィールの紹介
-- **プロジェクト一覧:** これまでに開発したプロジェクトをGithubのリポジトリから取得して表示する
-- **ブログ記事表示機能:** Zennの記事をスライダーで表示する
-- **アニメーション:** CSSアニメーションを活用した動的なUI
-- **お問い合わせ:** コンタクトページ
+- Astro、MDX(Content Collections + Zod)
+- Tailwind CSS v4(`@tailwindcss/vite`)と `@tailwindcss/typography`
+- Shiki(2テーマ)
+- satori と `@resvg/resvg-js`(OGP 画像)
+- Vitest、ESLint、Prettier
+- Vercel
+- Node は `.nvmrc` の 22 系(`engines` は `>=22.12.0 <23`)
 
-## 実装の推しポイント
-- **WELCOMEページの表示**
+## ディレクトリ構成
 
-https://github.com/user-attachments/assets/10373b64-563b-4062-b386-ad11a764826d
+| パス                                                        | 内容                                 |
+| ----------------------------------------------------------- | ------------------------------------ |
+| `src/content/projects/*.mdx`                                | プロジェクト原稿                     |
+| `src/content/resume.ts`                                     | プロフィールと経歴                   |
+| `src/assets/diagrams/`                                      | 図(`.mmd` と書き出した `.svg`)       |
+| `src/assets/fonts/`                                         | OGP 用フォント                       |
+| `src/components/`、`src/layouts/`、`src/lib/`、`src/pages/` | 画面と処理                           |
+| `scripts/`                                                  | 図の書き出し、公開前の検査           |
+| `docs/project-template.mdx`                                 | 原稿の雛形                           |
+| `tests/unit`、`tests/dist`                                  | 単体テスト、ビルド成果物のテスト     |
+| `.github/workflows/ci.yml`、`rebuild.yml`                   | CI、定期再ビルド                     |
+| `public/resume.pdf`                                         | 公開用の職務経歴書(開発者が用意する) |
 
-「Welcome to My Portfolio :)」という文字を順々にドロップさせてパーティクルの広がりと同時に表示する。
-そのあとに背景に表示した文字数分だけのカラーバリエーションを表示してスライドアウトさせる。
-さいごに顔文字の部分をジャンプさせるような表現でスライドアウトさせて、楽しい雰囲気でサイトに訪れてもらえるように工夫した。
+## 開発の始め方
 
-- **Zennの記事のスライダー表示**
-  
-https://github.com/user-attachments/assets/7c7060a7-0c56-45b4-801d-4b6511686fa8
+```sh
+npm ci
+npm run dev
+```
 
-ZennのAPIを使用して自分の作成した記事の情報を取得し、スライダーでループさせながら表示する。
-記事の情報をまとめてカード内に表示する時のデザインにもこだわった。
+ビルド結果の確認は `npm run preview` です。
 
-- **HeroセクションのDESKアニメーション**
+## npm scripts
 
-https://github.com/user-attachments/assets/e15912e6-0555-4d60-81ed-db5e40022978
+| コマンド                | 内容                                                                  |
+| ----------------------- | --------------------------------------------------------------------- |
+| `npm run dev`           | 開発サーバーを起動する                                                |
+| `npm run check`         | `astro check` で型を検査する                                          |
+| `npm run lint`          | ESLint を流す                                                         |
+| `npm run format:check`  | Prettier の整形を検査する                                             |
+| `npm test`              | `tests/unit` の単体テストを流す                                       |
+| `npm run build`         | 静的サイトを `dist` に書き出す                                        |
+| `npm run test:dist`     | `dist` を検査する。`build` の後に流す                                 |
+| `npm run diagrams`      | `.mmd` から `.svg` を書き出す                                         |
+| `npm run check:release` | 公開前の検査(`TODO(content)` の残り、resume.pdf、featured、図の鮮度) |
+| `npm run verify`        | check → lint → format:check → test → build → test:dist を順に流す     |
 
-デスク、ラップトップ、カップ、本などのオブジェクトを含むSVGを描画する。
-そのうちカップからは湯気が出るアニメーションを、ラップトップのディスプレイにはJavascript形式で1文字ずつ「Welcome to portfolio」を
-プログラム調の文字デザインで表示するアニメーションを作成した。
-プログラムでもWelcomeという気持ちを表現できてよかった。
+## プロジェクト原稿の書き方
 
-- **SkillsセクションのGithubのリポジトリで使われている技術スタック表示**
-  
-<img width="1920" alt="スクリーンショット 2025-02-09 1 39 53" src="https://github.com/user-attachments/assets/e79e9be6-23ac-4f59-ad60-f471dd8619d3" />
+`docs/project-template.mdx` を `src/content/projects/<slug>.mdx` に写して書きます。
 
-GithubのAPIから取得した自分のPublicのリポジトリ情報から、使用されている技術スタックとして
-どのような種類の技術を使っているか、使っている技術スタックの割合をレーダーチャートとプログレスバーで表示した。
-Githubでは各リポジトリで使用されている技術スタックは見えても、全体的にどの技術を使用して開発しているか、は
-見えないと思い、それをわかりやすく可視化するために二つのチャート形式で表示を行った。
+- slug は `^[a-z0-9]+(-[a-z0-9]+)*$` に合わせます。`index` は使えません。
+- title は 1〜60 文字、period は `YYYY-MM`(end は `present` でもよい)、summary は 1〜100 文字で改行なし、tech は 1〜8 個で重複なし、outcomes は 1〜3 件で各 60 文字以内、links の demo と github は https、order は 1 以上の整数です。違反すると `npm run build` が失敗します。
+- featured は全体で3件以下にし、featured どうしで order を重ねないでください。
+- 本文に `# ` の見出しを書かないでください(h1 は title から出ます)。章立ては雛形の4章(`## 1.`〜`## 4.`)を基本にします。
+- `TODO(content)` は実際の内容に書き換えます。
 
-また、自分の技術スタックの学習遍歴を簡単にまとめたものをその左側に表示している。
+図は Figure で入れます。alt は必須で、図の構成を文で説明してください。
 
-- **ProjectsセクションのGithubのContributionsの表示とリポジトリからの制作物取得**
+```mdx
+import Figure from '../../components/mdx/Figure.astro'
+import arch from '../../assets/diagrams/<slug>-architecture.svg'
 
-<img width="1920" alt="スクリーンショット 2025-02-09 1 40 11" src="https://github.com/user-attachments/assets/0b87ceb0-02b4-40a0-9816-44e90d5eeb54" />
+<Figure src={arch} alt="…" caption="…" />
+```
 
-Projectsでは、主にGithubから取得した直近から過去一年までの開発実情を表示するConributionsの表示と
-Githubのリポジトリで直近編集されたリポジトリ3つをギャラリービュー形式で表示している。
+## プロフィールと経歴(resume.ts)
 
-意図としてはまず、どれだけ開発を行なってきたかを定量的に可視化するためにGithubのContributionsの機能が有効であると考え、
-それをGithubでの可視化方式ではなく、オリジナルのカーブチャートを用いて表示している。
-次にリポジトリを元にした開発物の表示は、もともと作っていた[Notionをベースとしたポートフォリオサイト](https://bramble-path-e8e.notion.site/My-Portfolio-6b9aedf71fc448bd97efc11edf2c332d)を都度都度編集して制作物についてまとめるのが非常に手間だと思い、
-pushしたリポジトリがそのまま自動的にポートフォリオサイトに反映されるように実装したいと思ったことがきっかけでそのような実装にした。
-各リポジトリに表示できる画像はREADMEの一番最初に表示してある画像を取得して、その画像を表示するようにしている。
+`src/content/resume.ts` の `resume`(`satisfies Resume`)を書き換えます。
 
-## デプロイ
-このプロジェクトは **Vercel** を使用してデプロイされます。GitHubにプッシュすると自動的にデプロイが実行されます。
+- profile.summary は 120 文字以内、about は 1〜4 段落です。
+- skills は使った実績の順に並べます(星や数値は持ちません)。
+- experience の start は `YYYY-MM`、end は `YYYY-MM` か `present` です。表示のときに start の新しい順に並びます。
+- `public/resume.pdf` は、住所と電話番号を除いた公開用を置きます。
 
-## 今後の予定
-- ダークモードの実装
-- PWA対応
+## 図の書き出し
 
+1. `src/assets/diagrams/<slug>-architecture.mmd` を直す。
+2. `npm run diagrams` で `.svg` を書き出す(先頭に `<!-- source-sha256: … -->` が入る)。
+3. `.mmd` と `.svg` の両方をコミットする。
+
+`.svg` が古いと `npm test` が失敗します。Vercel のビルドでは書き出しません(Chromium を動かさないため)。
+
+## OGP 用フォントとライセンス
+
+`src/assets/fonts/` の `NotoSansJP-Regular.otf` と `NotoSansJP-Bold.otf` は Noto CJK の日本語サブセット版 OTF です。ライセンスは SIL Open Font License で、`OFL.txt` を一緒に置きます。ビルドのときに読むだけで、配信はしません。
+
+## 定期再ビルドの準備
+
+`rebuild.yml` が毎日 03:00 JST(cron `0 18 * * *`)と手動実行(workflow_dispatch)で Deploy Hook を POST します。開発者が手でやることは次の3つです。
+
+1. Vercel で `main` ブランチ向けの Deploy Hook を作る。
+2. GitHub の repository secret `VERCEL_DEPLOY_HOOK_URL` に登録する。
+3. workflow_dispatch で一度流し、デプロイが始まるか確かめる。
+
+public リポジトリでは 60 日動きがないと schedule が止まります。下の「依存の確認記録」を参照してください。
+
+## 公開の手順
+
+1. `renewal` で作業し、CI が通ることを確かめる。
+2. `npm run verify` と `npm run check:release` を通す。
+3. Vercel の Project Settings → Build and Deployment で、Framework Preset を Next.js から Astro に変え、Build Command を `npm run build`、Output Directory を `dist` にする。
+4. `main` にマージする。
+
+## 公開前に人間が見ること
+
+- 見た目: ライトとダーク、375px とデスクトップ
+- 図が読みやすいか
+- OGP の折り返しと、シェアしたときの表示
+- 原稿: 30秒で伝わるか。resume.pdf に個人情報がないか
+- Lighthouse: Vercel の Preview か本番の URL で測る。ローカルの preview では測らない(Analytics が 404 になるため)。目標は Performance 95 以上、ほか 100、CLS 0、LCP 1.2 秒未満
 
 ---
 
