@@ -88,7 +88,9 @@ describe.each(files)('dist: %s', (file) => {
   });
 
   it('<script> は Vercel Analytics のものがちょうど1つだけ', () => {
-    const all = scripts(html);
+    const all = scripts(html).filter(
+      (s) => s.attrs.get('type') !== 'application/ld+json',
+    );
     expect(all).toHaveLength(1);
     expect(all.every(isAnalyticsScript)).toBe(true);
   });

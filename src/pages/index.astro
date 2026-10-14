@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { buildPersonJsonLd } from '../lib/jsonld';
 import Hero from '../components/sections/Hero.astro';
 import About from '../components/sections/About.astro';
 import ProjectsList from '../components/sections/ProjectsList.astro';
@@ -17,6 +18,7 @@ const featured = selectFeatured(await getCollection('projects'));
   description={resume.profile.summary}
   ogImage="/og/index.png"
   type="website"
+  jsonLd={buildPersonJsonLd()}
 >
   <main class="pb-16">
     <Hero profile={resume.profile} />

@@ -7,6 +7,7 @@ import Container from '../components/common/Container.astro';
 import Badge from '../components/ui/Badge.astro';
 import LinkButton from '../components/ui/LinkButton.astro';
 import ExternalLink from '../components/icons/ExternalLink.astro';
+import { buildCreativeWorkJsonLd } from '../lib/jsonld';
 import { formatPeriod } from '../lib/format';
 import { SITE_NAME } from '../lib/site';
 
@@ -24,6 +25,7 @@ const periodText = formatPeriod(period);
   description={summary}
   ogImage={`/og/${project.id}.png`}
   type="article"
+  jsonLd={buildCreativeWorkJsonLd(project.data)}
 >
   <Header />
   <main class="py-16">
