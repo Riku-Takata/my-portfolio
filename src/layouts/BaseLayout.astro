@@ -3,15 +3,17 @@ import '../styles/global.css';
 import Analytics from '@vercel/analytics/astro';
 import Footer from '../components/common/Footer.astro';
 import { geistLatin } from '../lib/font-urls.mjs';
+import { serializeJsonLd } from '../lib/jsonld';
 
 interface Props {
   title: string;
   description: string;
   ogImage: `/og/${string}.png`;
   type: 'website' | 'article';
+  jsonLd?: object;
 }
 
-const { title, description, ogImage, type } = Astro.props;
+const { title, description, ogImage, type, jsonLd } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 const ogImageUrl = new URL(ogImage, Astro.site).href;
 ---
@@ -34,6 +36,9 @@ const ogImageUrl = new URL(ogImage, Astro.site).href;
     <meta property="og:locale" content="ja_JP" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="/fonts/geist.css" />
+    {jsonLd && (
+      <script type="application/ld+json" is:inline set:html={serializeJsonLd(jsonLd)} />
+    )}
     <Analytics />
   </head>
   <body class="bg-zinc-50 text-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
