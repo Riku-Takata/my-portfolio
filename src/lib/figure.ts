@@ -2,7 +2,7 @@
 export function assertAlt(alt: string): string {
   const trimmed = alt.trim();
   if (trimmed === '') {
-    throw new Error(`Figure の alt が空です: "${alt}"`);
+    throw new Error(`Figure の alt が空です: ${JSON.stringify(alt)}`);
   }
   return trimmed;
 }

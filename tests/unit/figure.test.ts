@@ -3,8 +3,20 @@ import { describe, expect, it } from 'vitest';
 import { assertAlt } from '../../src/lib/figure';
 
 describe('assertAlt', () => {
-  it.each(['', '   ', '\t\n', '　'])('空白だけ(%j)なら throw する', (v) => {
-    expect(() => assertAlt(v)).toThrow(Error);
+  it('空文字なら throw する', () => {
+    expect(() => assertAlt('')).toThrow(Error);
+  });
+
+  it('半角スペースだけなら throw する', () => {
+    expect(() => assertAlt('   ')).toThrow(Error);
+  });
+
+  it('タブと改行だけなら throw する', () => {
+    expect(() => assertAlt('\t\n')).toThrow(Error);
+  });
+
+  it('全角スペースだけなら throw する', () => {
+    expect(() => assertAlt('　')).toThrow(Error);
   });
 
   it('前後の空白を取り除いて返す', () => {
