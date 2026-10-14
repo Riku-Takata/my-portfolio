@@ -14,7 +14,15 @@ const safeAlt = assertAlt(alt);
 
 <figure>
   <div class="rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-100">
-    <img src={src.src} width={src.width} height={src.height} alt={safeAlt} />
+    <div class="overflow-x-auto">
+      <img
+        class="min-w-[40rem] sm:min-w-0"
+        src={src.src}
+        width={src.width}
+        height={src.height}
+        alt={safeAlt}
+      />
+    </div>
   </div>
   {caption && <figcaption class="text-sm text-zinc-500">{caption}</figcaption>}
 </figure>
