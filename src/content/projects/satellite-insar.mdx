@@ -14,6 +14,9 @@ featured: true
 order: 1
 ---
 
+import Figure from '../../components/mdx/Figure.astro';
+import arch from '../../assets/diagrams/satellite-insar-architecture.svg';
+
 ## 1. 概要 & 解決したい課題 (Why)
 
 TODO(content): 背景と課題を書く。ここは仮の文章です。
@@ -25,6 +28,12 @@ TODO(content): 全体の構成を書く。処理の流れは次のとおりで�
 ```text
 SAR データ -> 前処理 -> InSAR 解析 -> 変動マップ
 ```
+
+<Figure
+  src={arch}
+  alt="TODO(content): 構成を文で説明する。SAR データを前処理し、InSAR 解析をして変動マップを出す流れの図。"
+  caption="TODO(content): システム構成図"
+/>
 
 ## 3. 技術選定とトレードオフ
 
