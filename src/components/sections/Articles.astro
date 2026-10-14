@@ -1,0 +1,42 @@
+---
+import type { ZennArticle } from '../../lib/zenn';
+import { formatDate } from '../../lib/format';
+import Section from '../common/Section.astro';
+import LinkButton from '../ui/LinkButton.astro';
+
+interface Props {
+  articles: ZennArticle[];
+}
+
+const { articles } = Astro.props;
+---
+
+<Section id="articles" label="Articles">
+  {articles.length > 0 && (
+    <ol class="mt-4 space-y-2">
+      {articles.map((a) => (
+        <li class="flex gap-3 text-sm">
+          <time
+            datetime={a.publishedAt}
+            class="shrink-0 text-zinc-500 dark:text-zinc-400"
+          >
+            {formatDate(a.publishedAt)}
+          </time>{' '}
+          <a
+            href={a.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-indigo-600 transition-colors duration-150 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:text-indigo-400"
+          >
+            {a.title}
+          </a>
+        </li>
+      ))}
+    </ol>
+  )}
+  <div class="mt-6">
+    <LinkButton href="https://zenn.dev/riku_takata">
+      Zenn の記事一覧 →
+    </LinkButton>
+  </div>
+</Section>
