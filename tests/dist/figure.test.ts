@@ -168,6 +168,24 @@ describe('Figure', () => {
         );
         expect(pre.length).toBeGreaterThanOrEqual(1);
       });
+      it('AC-18: img が overflow-x-auto を持つ要素の中にある', () => {
+        expect(target.length).toBeGreaterThanOrEqual(1);
+        for (const f of target) {
+          const ok = openAncestors(f.inner).some((tag) =>
+            classes(tag).includes('overflow-x-auto'),
+          );
+          expect(ok).toBe(true);
+        }
+      });
+      it('AC-19: img の class に min-w- で始まるクラスがある', () => {
+        expect(target.length).toBeGreaterThanOrEqual(1);
+        for (const f of target) {
+          const ok = classes(startTags(f.inner, 'img')[0]).some((c) =>
+            c.startsWith('min-w-'),
+          );
+          expect(ok).toBe(true);
+        }
+      });
     });
   }
 
