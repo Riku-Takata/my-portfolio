@@ -19,6 +19,9 @@ milestones:
 - id: M6
   title: 運用と公開の準備
   goal: 定期再ビルドのワークフロー、公開前チェック(npm run check:release)、新しい README がそろい、開発者が原稿をそろえて main にマージできる状態になる。
+- id: M7
+  title: 最終確認での直し
+  goal: '最終確認の PR #36 のスクリーンショットで見つかった見た目の問題(OGP の長いタイトルのはみ出し、セクションの間の余白、375px の表と図)が直り、npm run verify が通る。'
 tasks:
 - id: T-001
   title: 依存ライブラリと外部仕様の確認記録(T-00)
@@ -444,4 +447,59 @@ tasks:
   - T-026
   size: S
   human_check: 開発者が README の手順だけで原稿の追加と公開ができそうかを読んで確かめる。
+  status: todo
+- id: T-027
+  title: OGP 画像の長いタイトルと概要が右端からはみ出すのを直す
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、タイトル 54 文字・概要 79 文字の OGP 画像(src/lib/og.ts の renderOgPng)の文字が、画像の右端(左右の余白 80px の内側の 1040px)を超えて切れていた。2行・3行での省略(lineClamp)は効いているが、行の幅が制限されていない。(1) satori に渡す要素の木を作る部分を、純粋な関数 buildOgTree({ title, summary }) として src/lib/og.ts から export し、renderOgPng はそれを使う。(2) タイトルと概要の要素に width: 1040(1200 − 左右の余白 80px × 2)を付け、日本語でも幅の中で折り返すようにする(必要なら wordBreak を指定する)。省略の行数(タイトル 2 行、概要 3 行)、文字の大きさと色、帯、「Riku Takata」の位置は変えない。(3) tests/unit/og.test.ts に、buildOgTree のタイトルと概要の要素の幅が 1040 であることと、上限に近い長さ(タイトル 54 文字以上、概要 79 文字以上)の入力で renderOgPng が 1200×630 の PNG を返すことのテストを足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - src/lib/og.ts が buildOgTree を export し、renderOgPng がそれを使っている
+  - buildOgTree の結果で、タイトルと概要の要素の style.width が 1040 で、タイトルの lineClamp が 2、概要の lineClamp が 3
+  - タイトル 54 文字以上・概要 79 文字以上の入力で renderOgPng が返す PNG の IHDR が 1200×630
+  - npm run verify が通る
+  depends_on:
+  - T-019
+  size: S
+  human_check: 上限に近い長さのタイトルと概要で作った PNG を PR に貼り、文字が右端の余白の内側で折り返し、2行・3行で省略されているかを見る。
+  status: todo
+- id: T-028
+  title: トップページのセクションの間に余白を入れる
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、トップページの About → Featured Projects → Technical Skills → Experience & Education → Articles の間に余白がほとんどなく、前のセクションの最後と次の見出しがくっついて見えた。原因は src/components/common/Section.astro の <section> に縦の余白がないこと(Hero だけが自分で py-16 を持っている)。(1) Section.astro の <section> に縦の余白(py-12 を目安に、Hero の py-16 と釣り合うもの)を付け、Section を使う全セクションに同じ余白が入るようにする。各セクションのコンポーネントで個別に余白を足さない。(2) 見出し(h2)と中身の間の余白が各セクションでそろっているか確かめ、そろっていなければ Section.astro の h2 の側でそろえる。影やグラデーションは使わない(デザイン規律のテストを守る)。(3) tests/dist に、下の受け入れ基準の 1 を確かめるテストを足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/index.html の id が about、projects、skills、experience、articles の <section> の class に、どれも同じ縦の余白のクラス(py- で始まるもの)がある
+  - Section.astro 以外のセクションのコンポーネントに、セクションの間の余白のための py- や my- のクラスを足していない
+  - npm run verify が通る
+  depends_on:
+  - T-012
+  - T-013
+  - T-014
+  - T-015
+  size: S
+  human_check: トップページ全体を 375px とデスクトップ、ライトとダークで撮り、セクションの間の余白と見出しの階層を見る。
+  status: todo
+- id: T-029
+  title: 375px で詳細ページの表の列が1文字ずつ折り返すのを直す
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、375px の詳細ページの表(観点・採用・退けた候補・理由)の1列目が「観/点」「言/語」のように1文字ずつ折り返していた。表は src/components/mdx/Table.astro の overflow-x-auto の中にあるので、狭い画面では表を詰めずに横スクロールさせるほうがよい。(1) Table.astro の <table> に最小の幅(min-w-[36rem] を目安)を付け、375px では表の中だけを横にスクロールさせる。ページ全体は横にスクロールさせない。(2) tests/dist の詳細ページのテストに、下の受け入れ基準の 1 を足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 詳細ページの <table> はどれも、class に overflow-x-auto を含む <div> の直下にあり、<table> の class に min-w- で始まるクラスがある
+  - npm run verify が通る
+  depends_on:
+  - T-026
+  size: S
+  human_check: 詳細ページを 375px で撮り、表が横スクロールになって列が1文字ずつ折り返していないこと、ページ全体ははみ出していないことを見る。
+  status: todo
+- id: T-030
+  title: 狭い画面で図の文字が小さくなりすぎるのを直す
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、375px の詳細ページの構成図(横に長い Mermaid の SVG)が画面の幅に縮められ、文字がほとんど読めなかった。(1) src/components/mdx/Figure.astro で、図の板(枠と背景のある div)の中に overflow-x-auto の入れ物を置き、<img> に最小の幅(min-w-[40rem] を目安)を付けて、狭い画面では図の中だけを横にスクロールさせる。デスクトップの幅では今と同じ見た目にする(図が板からはみ出さない)。板の色(ダークでも明るい板)と figcaption は変えない。(2) tests/dist の図のテストに、下の受け入れ基準の 1 を足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 詳細ページの図の <img> が class に overflow-x-auto を含む要素の中にあり、<img> の class に min-w- で始まるクラスがある
+  - 図の板の class(ライトとダークの背景と枠)は変わっていない
+  - npm run verify が通る
+  depends_on:
+  - T-018
+  size: S
+  human_check: 詳細ページを 375px とデスクトップ、ライトとダークで撮り、図の文字が読める大きさか、デスクトップで図が板からはみ出していないかを見る。
   status: todo
