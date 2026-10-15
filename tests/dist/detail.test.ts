@@ -112,11 +112,13 @@ describe('詳細ページ', () => {
         const anchors = [...header.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/g)].map(
           (m) => m[0],
         );
-        expect(anchors).toHaveLength(1);
-        const a = attrs(startTags(anchors[0], 'a')[0]);
-        expect(a.get('href')).toBe('/');
+        const rootAnchors = anchors.filter(
+          (a) => attrs(startTags(a, 'a')[0]).get('href') === '/',
+        );
+        expect(rootAnchors).toHaveLength(1);
+        const a = attrs(startTags(rootAnchors[0], 'a')[0]);
         expect(a.has('target')).toBe(false);
-        expect(text(anchors[0])).toBe(SITE_NAME);
+        expect(text(rootAnchors[0])).toBe(SITE_NAME);
       });
 
       it('AC-9: 戻るリンクは最後の h2 より後ろ', () => {
@@ -131,8 +133,8 @@ describe('詳細ページ', () => {
     });
   }
 
-  it('AC-10: トップと 404 に site-header がない', () => {
-    expect(readDist('index.html')).not.toContain('id="site-header"');
-    expect(readDist('404.html')).not.toContain('id="site-header"');
+  it('AC-10: トップと 404 にも site-header が 1 つある', () => {
+    expect(readDist('index.html').split('id="site-header"').length - 1).toBe(1);
+    expect(readDist('404.html').split('id="site-header"').length - 1).toBe(1);
   });
 });
