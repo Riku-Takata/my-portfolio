@@ -153,6 +153,8 @@ T-001 で、docs/design.md の「未確認」の項目を公式ドキュメン�
 | `Vercel の静的出力の 404.html` | 未確認: 公式は「Output Directory に 404.html を出すと、どの静的ファイルにも一致しないルートで 404 ページとして返す」と書くが、状態コードが 404 かは書いていない | 2026-10-09 | https://vercel.com/kb/guide/custom-404-page |
 | `Noto Sans JP の容量` | Google Fonts(google/fonts の `ofl/notosansjp`)は可変フォントの `NotoSansJP[wght].ttf`(9,589,900 バイト、約 9.6 MB)だけで、Regular と Bold の静的な TTF は配っていない; 公式の GitHub(notofonts/noto-cjk の `Sans/SubsetOTF/JP`)の OTF は Regular が 4,533,028 バイト(約 4.5 MB)、Bold が 4,656,448 バイト(約 4.7 MB)。1 MB = 1,000,000 バイト | 2026-10-09 | https://github.com/notofonts/noto-cjk/tree/main/Sans/SubsetOTF/JP https://github.com/google/fonts/tree/main/ofl/notosansjp https://fonts.google.com/noto/specimen/Noto+Sans+JP |
 | `prettier` | 3.9.9 | 2026-10-09 | https://www.npmjs.com/package/prettier |
+| `fast-xml-parser` | 5.11.2 | 2026-10-16 | https://www.npmjs.com/package/fast-xml-parser |
+| `note の RSS` | title: 素の文字列(CDATA ではない); link: `https://note.com/<urlname>/n/<id>` の形; pubDate: RFC 822 の形(例: `Fri, 09 Oct 2026 11:00:00 +0900`)。公式の仕様のページは見つからず、公開アカウントの RSS の実物で確かめた | 2026-10-16 | 未確認(公式の仕様なし。実物は公開アカウントの RSS) |
 
 ### 設計との差
 

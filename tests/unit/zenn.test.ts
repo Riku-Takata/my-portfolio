@@ -105,7 +105,13 @@ describe('fetchLatestArticles', () => {
     const r = await fetchLatestArticles();
     expect(r).toHaveLength(5);
     r.forEach((a, i) => {
-      expect(Object.keys(a).sort()).toEqual(['publishedAt', 'title', 'url']);
+      expect(Object.keys(a).sort()).toEqual([
+        'media',
+        'publishedAt',
+        'title',
+        'url',
+      ]);
+      expect(a.media).toBe('zenn');
       expect(a.title).toBe(list[i].title);
       expect(a.publishedAt).toBe(list[i].published_at);
       expect(a.url).toBe(

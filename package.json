@@ -29,6 +29,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@vercel/analytics": "^2.0.1",
     "astro": "^7.3.8",
+    "fast-xml-parser": "^5.11.2",
     "satori": "^0.56.1",
     "tailwindcss": "^4.3.3"
   },

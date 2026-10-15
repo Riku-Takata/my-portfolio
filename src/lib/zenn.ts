@@ -1,7 +1,5 @@
 import { ZENN_USERNAME } from './site';
-import { zennArticleSchema, zennResponseSchema } from './schemas';
-
-export type ZennArticle = { title: string; url: string; publishedAt: string };
+import { zennArticleSchema, zennResponseSchema, type Article } from './schemas';
 
 const ZENN_ORIGIN = 'https://zenn.dev';
 const TIMEOUT_MS = 10000;
@@ -10,7 +8,7 @@ const TIMEOUT_MS = 10000;
 export async function fetchLatestArticles(
   username: string = ZENN_USERNAME,
   count: number = 5,
-): Promise<ZennArticle[]> {
+): Promise<Article[]> {
   if (!Number.isInteger(count) || count < 1) {
     throw new Error(`count は 1 以上の整数にする: ${JSON.stringify(count)}`);
   }
@@ -49,6 +47,7 @@ export async function fetchLatestArticles(
         return r.success
           ? [
               {
+                media: 'zenn' as const,
                 title: r.data.title,
                 url: `${ZENN_ORIGIN}/${encoded}/articles/${r.data.slug}`,
                 publishedAt: r.data.published_at,
