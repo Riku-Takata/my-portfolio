@@ -45,30 +45,37 @@ const { class: className = 'w-40' } = Astro.props;
       class="fill-zinc-900 stroke-zinc-700 dark:fill-zinc-950 dark:stroke-zinc-400"
       stroke-width="2"
     ></rect>
-    <text
-      class="desk-code desk-code-1 fill-indigo-400 dark:fill-indigo-300 font-mono"
-      x="19.5"
-      y="20.5"
-      font-size="2"
-    >
-      {'const greet = () => {'}
-    </text>
-    <text
-      class="desk-code desk-code-2 fill-indigo-400 dark:fill-indigo-300 font-mono"
-      x="20.5"
-      y="23"
-      font-size="2"
-    >
-      {"console.log('hi');"}
-    </text>
-    <text
-      class="desk-code desk-code-3 fill-indigo-400 dark:fill-indigo-300 font-mono"
-      x="19.5"
-      y="25.5"
-      font-size="2"
-    >
-      {'};'}
-    </text>
+    <defs>
+      <clipPath id="desk-screen-clip">
+        <rect x="19" y="18" width="16" height="9"></rect>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#desk-screen-clip)">
+      <text
+        class="desk-code desk-code-1 fill-indigo-400 dark:fill-indigo-300 font-mono"
+        x="19.5"
+        y="20.5"
+        font-size="1.2"
+      >
+        {'const greet = () => {'}
+      </text>
+      <text
+        class="desk-code desk-code-2 fill-indigo-400 dark:fill-indigo-300 font-mono"
+        x="20.5"
+        y="22.5"
+        font-size="1.2"
+      >
+        {"console.log('hi');"}
+      </text>
+      <text
+        class="desk-code desk-code-3 fill-indigo-400 dark:fill-indigo-300 font-mono"
+        x="19.5"
+        y="24.5"
+        font-size="1.2"
+      >
+        {'};'}
+      </text>
+    </g>
   </g>
 
   <g>
