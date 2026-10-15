@@ -544,3 +544,18 @@ tasks:
   size: S
   human_check: トップページをデスクトップと 375px で撮り、Hero→About の間と About→Featured Projects の間の余白が同じに見えるかを見る。
   status: todo
+- id: T-034
+  title: Hero に机のイラスト(湯気とタイピングの動き)を置く
+  milestone: M7
+  request: '詳細設計「F-02 Hero」の机のイラストと、「動き」の例外に従う(この PR で設計を書き換えた)。旧版の SVG は main ブランチの app/components/DeskAnimation.tsx と styles/DeskAnimation.module.css にある(git show origin/main:<パス> で読める)。(1) src/components/sections/DeskIllustration.astro を作る。旧版の構図(机、ノート PC、コップと湯気、本)を引き継いだインラインの SVG にし、色は zinc と indigo だけに塗り直す(線は zinc、PC の画面のコードは indigo など)。ライトとダークで色を切り替える(SVG の fill / stroke に CSS 変数か currentColor を使い、prefers-color-scheme で変える)。<svg> に aria-hidden="true" を付ける。(2) 動きは2つだけ、コンポーネントの <style> の @keyframes で書く: コップの湯気(旧版と同じ stroke-dasharray の動き)と、PC の画面のコードを行ごとに見せていくタイピング(旧版の「const greet = () => {…}」の数行を、steps() で左から見せていき、最後まで見せたら少し止まって繰り返す)。foreignObject と JS は使わない(コードは SVG の <text> で書く)。@media (prefers-reduced-motion: reduce) では animation を止め、コードを全部見せた状態にする。(3) Hero.astro に置く: デスクトップ(sm 以上)では名前とリンクの右、375px では名前の上に小さく(幅 160px 程度)置く。Hero の余白と、ほかの要素の並びは変えない。(4) tests/unit/source-rules.test.ts の「色と動きの規律」の判定で、DeskIllustration.astro の中の @keyframes と animation だけを例外にする(ほかのファイルでは今までどおり違反にする)。色の規律(zinc と indigo 以外の色名、グラデーション)は DeskIllustration.astro にもそのまま当てる。(5) tests/dist に desk.test.ts を足し、下の受け入れ基準の 1〜4 を確かめる。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 'dist/index.html の #top の中に aria-hidden="true" の <svg> がちょうど1つあり、その中に <foreignObject> がない'
+  - 'dist の CSS に @keyframes があり、prefers-reduced-motion: reduce の中で animation を止める規則(animation: none など)がある'
+  - dist の HTML の <script> が増えていない(Vercel Analytics だけ)
+  - src/ の DeskIllustration.astro 以外のファイルに @keyframes や animate- がなく、DeskIllustration.astro にも zinc と indigo 以外の色名やグラデーションがない
+  - npm run verify が通る
+  depends_on:
+  - T-032
+  size: M
+  human_check: トップページを 375px とデスクトップ、ライトとダークで撮り、机の絵の大きさと置き場所、色がサイトになじんでいるかを見る。湯気とタイピングが動くこと、OS で「視差効果を減らす」を選ぶと止まることを目で確かめる。
+  status: todo
