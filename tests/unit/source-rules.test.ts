@@ -42,6 +42,26 @@ function findClassViolations(source: string, isCss = false): string[] {
   return CLASS_RULES.flatMap((re) => [...text.matchAll(re)].map((m) => m[0]));
 }
 
+const MOTION_EXEMPT = 'src/components/sections/DeskIllustration.astro';
+
+const MOTION_RULES: RegExp[] = [
+  /@keyframes[\w-]*/g,
+  new RegExp(START + 'animation(?:-[a-z]+)*(?=\\s*:)', 'g'),
+];
+
+function findMotionViolations(source: string): string[] {
+  return MOTION_RULES.flatMap((re) =>
+    [...source.matchAll(re)].map((m) => m[0]),
+  );
+}
+
+function findViolations(rel: string, source: string): string[] {
+  const classViolations = findClassViolations(source, rel.endsWith('.css'));
+  const motionViolations =
+    rel === MOTION_EXEMPT ? [] : findMotionViolations(source);
+  return [...classViolations, ...motionViolations];
+}
+
 function findClientDirectives(source: string): string[] {
   return [...source.matchAll(/client:[a-z][A-Za-z0-9_-]*/g)].map((m) => m[0]);
 }
@@ -152,13 +172,47 @@ describe('findClientDirectives', () => {
   });
 });
 
+describe('findViolations', () => {
+  const motionSnippets = [
+    '@keyframes steam { 100% { opacity: 0; } }',
+    '.a { animation: steam 2s linear infinite; }',
+    '.a { animation-name: steam; }',
+  ];
+
+  it.each(['src/components/sections/Hero.astro', 'src/styles/global.css'])(
+    'MOTION_EXEMPT 以外では動きの宣言が違反になる: %s',
+    (rel) => {
+      for (const snippet of motionSnippets) {
+        expect(findViolations(rel, snippet)).not.toEqual([]);
+      }
+    },
+  );
+
+  it('MOTION_EXEMPT では動きの宣言が違反にならない', () => {
+    for (const snippet of motionSnippets) {
+      expect(findViolations(MOTION_EXEMPT, snippet)).toEqual([]);
+    }
+  });
+
+  it('MOTION_EXEMPT でも色の違反は報告される', () => {
+    expect(
+      findViolations(MOTION_EXEMPT, '<rect class="text-red-500" />'),
+    ).not.toEqual([]);
+    expect(findViolations(MOTION_EXEMPT, 'bg-gradient-to-r')).not.toEqual([]);
+  });
+
+  it('MOTION_EXEMPT でも animate- と transform は報告される', () => {
+    expect(findViolations(MOTION_EXEMPT, 'animate-spin')).not.toEqual([]);
+    expect(findViolations(MOTION_EXEMPT, 'transform')).not.toEqual([]);
+  });
+});
+
 describe('src/ のソース', () => {
   it('色と動きの規律に反するクラスがない', () => {
     const violations = classTargets.flatMap((rel) =>
-      findClassViolations(
-        readFileSync(path.join(root, rel), 'utf8'),
-        rel.endsWith('.css'),
-      ).map((m) => `${rel}: ${m}`),
+      findViolations(rel, readFileSync(path.join(root, rel), 'utf8')).map(
+        (m) => `${rel}: ${m}`,
+      ),
     );
     expect(violations).toEqual([]);
   });
