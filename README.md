@@ -107,7 +107,7 @@ public リポジトリでは 60 日動きがないと schedule が止まりま�
 
 1. `renewal` で作業し、CI が通ることを確かめる。
 2. `npm run verify` と `npm run check:release` を通す。
-3. Vercel の Project Settings → Build and Deployment で、Framework Preset を Next.js から Astro に変え、Build Command を `npm run build`、Output Directory を `dist` にする。
+3. Framework Preset(Astro)、Build Command(`npm run build`)、Output Directory(`dist`)は `vercel.json` で指定しているので、Vercel のダッシュボードの変更は要らない。ダッシュボードで変える場合は Astro にそろえる。
 4. `main` にマージする。
 
 ## 公開前に人間が見ること

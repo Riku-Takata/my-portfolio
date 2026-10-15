@@ -1,1 +1,6 @@
-{ "trailingSlash": true }
+{
+  "framework": "astro",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "trailingSlash": true
+}
