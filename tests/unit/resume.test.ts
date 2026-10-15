@@ -61,6 +61,9 @@ describe('resume', () => {
     ]);
     expect(resume.profile.links).toEqual({
       github: 'https://github.com/Riku-Takata',
+      zenn: 'https://zenn.dev/riku_takata',
+      note: 'https://note.com/',
+      speakerDeck: 'https://speakerdeck.com/',
       x: 'https://x.com/tk1_chestnut',
       email: 'RikuChestnut66@gmail.com',
       resumePdf: '/resume.pdf',
