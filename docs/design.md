@@ -39,7 +39,7 @@
 | アイコン | `src/components/icons/*.astro` に SVG を直接書く。GitHub と X は Simple Icons(CC0)、ほかは Lucide(ISC)の path を写す | 必要なのは6個ほど。Lucide の本体はブランドアイコンを含まない(**未確認**)。依存を増やさない | — |
 | sitemap | `@astrojs/sitemap` | 標準の方法。`site` の設定が必要 | **未確認** |
 | 解析 | `@vercel/analytics` の Astro 用コンポーネント(`@vercel/analytics/astro`) | Q-9 の答え。**これがサイトで唯一のクライアント JS になる**。Zero-JS の例外として明記する | 提供の形と、静的出力で動くことは**未確認** |
-| ホスティング | Vercel(静的出力のため adapter なし)。`vercel.json` で `trailingSlash: true` | Q-9 の答え | Framework Preset を Astro にする手順は**未確認** |
+| ホスティング | Vercel(静的出力のため adapter なし)。`vercel.json` で `trailingSlash: true` と `framework: astro`(Framework Preset をデプロイ単位で上書きする。T-033) | Q-9 の答え | Framework Preset を Astro にする手順は**未確認** |
 | テスト | Vitest。プロジェクトを `unit` と `dist` に分ける | Vite 系で Astro と相性がよい | **未確認** |
 | 型・lint | `astro check`(`@astrojs/check`)、ESLint(flat config、`eslint-plugin-astro`、`typescript-eslint`)、Prettier(`prettier-plugin-astro`) | `.astro` ファイルの型を検査できる | **未確認** |
 | Node | 22 系の LTS(`.nvmrc` と `engines`) | Astro の対応範囲に合わせる | 対応範囲は**未確認** |
@@ -298,7 +298,8 @@ type Resume = {
 ### F-08 Footer / Header(`common/`)
 
 - Footer: `© <ビルドした年> Riku Takata` だけにする。今の Footer にある `/privacy-policy` と `/terms-of-service` は存在しないページへのリンクなので消す。BaseLayout の `<slot />` の後に置き、全ページに出す。
-- Header: 詳細ページにだけ出す(`<header id="site-header">`)。左に `Riku Takata` を置き、`/` へリンクする。トップでは Hero が Header を兼ねる。
+- Header: 全ページ(トップ、詳細、404)に出す(`<header id="site-header">`、BaseLayout の `<body>` の先頭)。左に `Riku Takata` を置き、`/` へリンクする。右に `<nav>` で About / Projects / Skills / Experience / Articles(`/#<id>`)へのリンクを置く。画面の上に固定し(sticky)、下端の境界線だけで区切る(影とぼかしは使わない)。375px では nav の中だけを横スクロールにする。JS は使わない。
+  - 変更の経緯: 当初は「詳細ページにだけ出し、トップでは Hero が兼ねる」としていたが、最終確認(PR #36)で開発者から「ヘッダーがないのが見づらい」と指摘があり、全ページに出すことにした(T-031)。
 
 ### F-09 プロジェクト詳細ページ(`pages/projects/[slug].astro` + `ProjectLayout.astro`)
 
