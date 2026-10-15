@@ -559,3 +559,17 @@ tasks:
   size: M
   human_check: トップページを 375px とデスクトップ、ライトとダークで撮り、机の絵の大きさと置き場所、色がサイトになじんでいるかを見る。湯気とタイピングが動くこと、OS で「視差効果を減らす」を選ぶと止まることを目で確かめる。
   status: todo
+- id: T-035
+  title: 机のイラストの PC の画面で、コードが枠をはみ出すのを直す
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、src/components/sections/DeskIllustration.astro の PC の画面のコード(<text class="desk-code ...">)が画面の右の枠を越え、隣の本に重なっていた。画面の rect は x=18、width=18、stroke-width=2 なので、内側は x=19〜35(幅 16)。今は font-size 2 の等幅で「const greet = () => {」(21 文字)を書いていて、幅がおよそ 21 × 0.6 × 2 ≒ 25 になり、はみ出している。(1) コードの各行が画面の内側に収まるようにする: font-size を小さくする(1.2 前後)か、行の文字を短くするか、その両方で、どの行も「x + 文字数 × 0.6 × font-size」が 35 以下になるようにする。旧版と同じく、関数を定義して console.log を呼ぶ数行のコードという見え方は残す。行の高さが画面の内側(y=18〜27)に収まることも確かめる。(2) 念のため、コードの <text> をまとめて、画面の内側の rect(x=19、y=18、width=16、height=9)を使った <clipPath> で切る。clipPath の id はページ内で重ならない名前にする。(3) タイピングの動き(clip-path の inset の @keyframes)、動きを減らす設定での静止、色は変えない。(4) tests/dist/desk.test.ts に、下の受け入れ基準の 1 と 2 を確かめるテストを足す(ビルド結果の HTML から desk-code の <text> の x、font-size、文字を読んで計算する)。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/index.html の机のイラストの class に desk-code を含む <text> のどれも、x + 文字数 × 0.6 × font-size が 35 以下で、y が 18〜27 の範囲にある
+  - desk-code の <text> が、画面の内側の rect を使った <clipPath> を参照する要素の中にある
+  - 'タイピングの @keyframes と、prefers-reduced-motion: reduce で止める規則が残っている'
+  - npm run verify が通る
+  depends_on:
+  - T-034
+  size: S
+  human_check: トップページを 375px とデスクトップ、ライトとダークで撮り、動きを減らす設定(コードを全部見せた静止画)でも、コードが PC の画面の枠の内側に収まっているかを見る。
+  status: todo
