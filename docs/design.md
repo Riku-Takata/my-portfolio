@@ -5,7 +5,7 @@
 **目的**
 選考の面接官やテックリードが、30秒で「技術スタック・設計力・課題解決力」をつかめるポートフォリオにする。今の Next.js 版(ネオン調のカード、Welcome アニメーション、実行時の API Route)を捨て、同じリポジトリ `Riku-Takata/my-portfolio` で Astro の静的サイトに入れ替える。
 
-**作るもの**
+**作るもの**(2026-10-16 に1ページのハブ型へ変えた。末尾の「設計の変更(2026-10-16)」を優先する)
 - トップページ `/`。1カラムで、Hero / About / Featured Projects / Technical Skills / Experience & Education の5セクションに、Q-3 の答えによる Zenn 記事一覧(Articles)を加える。
 - プロジェクト詳細ページ `/projects/[slug]/`。MDX で書き、アーキテクチャ図は事前に書き出した SVG を使う。
 - ページごとの OGP 画像。ビルド時に PNG を作る。
@@ -557,3 +557,93 @@ T-014、T-015、T-016 が、実装では直せない理由で止まった(spec �
 - **T-016 を2つに分けた**: 骨組み(T-016)と本文の組版(T-026)。T-018 は T-026 の後にする。
 - **決めずに残していた分岐を決めた**: Figure の板の色(zinc の中で決める)、Figure の出し方(`<img>`)、Articles の空の表示の確かめ方(`ZENN_OFFLINE=1`)、Footer の置き場所(BaseLayout)、Header の目印(`id="site-header"`)、OGP のフォント(サブセット版 OTF を配置済み)。
 - **既存のテストを変えるタスク**(T-025 の `<script>` の数え方)は、変えるファイルと変え方を request に書いた。
+
+## 設計の変更(2026-10-16): 1ページのハブ型へ
+
+開発者の依頼で、サイトを「長文を置かず、一次情報(GitHub / Zenn / note / Speaker Deck)へ案内する1ページの索引」に作り替える。サイトの中の長文と下層ページは、外の媒体と二重に管理することになり、無意味なページ遷移も生むため。**この節は、上の F-03〜F-07、F-09〜F-11、F-14、F-16 と「データとコンテンツ」のうち食い違う部分より優先する。** 色・動き・文字の階層・Zero-JS の規律(「共通のデザイン規律」)は変えない。
+
+### 媒体の役割分担(Information Architecture)
+
+| 媒体 | 役割のラベル | 置くもの |
+|---|---|---|
+| GitHub | Code & Architecture | 実装、環境構築、構成図などの技術仕様(一次情報) |
+| Zenn | Tech Deep Dive | 技術選定の理由、ボトルネックの解き方、技術検証のログ |
+| note | Context & Log | カンファレンスの参加記、登壇・出展の振り返り、研究・開発の背景 |
+| Speaker Deck | Slides | 展示会・学会・LT の発表スライド |
+
+この分担そのものを About の下に「Media Policy」として見せる(採用担当者へ、情報を意図して分けていることを示すため)。
+
+### ページ構成
+
+- ページは `/` と `/404` だけにする。`/projects/<slug>/`、`ProjectLayout.astro`、MDX のコレクション、Figure・Table、図の書き出し(Mermaid)、プロジェクトごとの OGP 画像は廃止する。OGP は `og/index.png` だけを作る。モーダルも作らない。
+- 外部への案内はすべて `target="_blank" rel="noopener noreferrer"` の直リンクにする。
+- セクション(上から。h2 は英語)
+  1. `#top` Hero: 氏名、所属、コア領域のタグ(`profile.coreTags`、3〜4個。例: Satellite Remote Sensing / Spatial Data / AI & Cloud Backend)、主要な外部リンク(GitHub / Zenn / note / Speaker Deck / X / Mail / Resume (PDF))。机のイラストはそのまま。
+  2. `#about` About & Media Policy: 専門領域を2〜4枚の小さなカード(Bento Grid 風。`sm` 以上で2列)で示し、その下に「Media Policy」として上の表の4媒体をミニカード(アイコン、媒体名、役割のラベル、1行の説明、プロフィールへのリンク)で並べる。About の段落(`resume.about`)と Technical Skills(`#skills`)は廃止する(技術はプロジェクトのカードのタグで見せる)。
+  3. `#projects` Featured Projects: ティーザー型のカード(下の型)。
+  4. `#articles` Articles & Logs: Zenn(技術解説)と note(ログ)を、`sm` 以上で2列、375px では縦に分けて出す。**タブにはしない**(切り替えに JS が要り、Zero-JS の規律に反するため)。
+  5. `#timeline` Timeline: 学歴、共同研究、展示会、学会発表、カンファレンス参加などを新しい順に縦の線で並べ、各項目に note / Slide などへのリンクを添える。Experience & Education(`#experience`)はこれに置き換える。
+- Header の nav は About / Projects / Articles / Timeline にする。
+
+### データの型(`src/content/*.ts` の静的データ + `src/lib/schemas.ts` の Zod)
+
+MDX をやめ、データは TypeScript の配列で書く。型は Zod のスキーマから `z.infer` で作り、`src/lib/content.ts` の読み出し関数(`loadProjects()` など)が `parse` してから返す。トップはこの関数だけを使うので、違反があれば `astro build` が失敗する。
+
+```ts
+type Media = 'github' | 'zenn' | 'note' | 'slide' | 'demo';
+type ExternalLink = { media: Media; url: string /* https のみ */; label?: string };
+// label を省いたときの表示: github 'GitHub: Code & README' / zenn 'Zenn: 設計・技術解説' /
+// note 'note: 開発背景・振り返り' / slide 'Slide: 発表資料' / demo 'Demo: Webサイト'
+// 並び順は常に github → zenn → note → slide → demo(lib の純粋関数 sortLinks で決める)
+
+type YearMonth = 'YYYY-MM';
+type Period = { start: YearMonth; end?: YearMonth | 'present' }; // end は start 以降
+
+type Project = {                  // src/content/projects.ts
+  id: string;                     // ^[a-z0-9]+(-[a-z0-9]+)*$、重複なし
+  context: { label: string /* 1〜12文字。例: 共同実証実験 / 大学院研究 / 個人開発 */; period: Period };
+  title: string;                  // 1〜60文字
+  summary: string;                // 1〜60文字、改行なし(体言止めの1行)
+  highlight: string;              // 1〜100文字、改行なし。最重要のフック(課題・成果・役割)
+  techStack: string[];            // 3〜6個、重複なし(大文字小文字を区別しない)
+  links: ExternalLink[];          // 0〜5個、media の重複なし
+  featured: boolean; order: number; // featured は 3件まで、order は重ならない(selectFeatured を流用)
+};
+
+type Article = { media: 'zenn' | 'note'; title: string; url: string; publishedAt: string /* ISO 8601 */ };
+
+type TimelineKind = 'education' | 'research' | 'exhibition' | 'presentation' | 'conference' | 'internship' | 'work';
+type TimelineItem = {             // src/content/timeline.ts
+  kind: TimelineKind; period: Period;  // end を省くと単発(1か月)の出来事
+  title: string;                  // 1〜60文字
+  org?: string;                   // 1〜40文字
+  links: ExternalLink[];          // 0〜3個。主に note と slide
+};
+
+type Profile = {                  // src/content/resume.ts の profile を置き換える
+  nameJa: string; nameEn: string; affiliation: string;
+  coreTags: string[];             // 3〜4個
+  summary: string;                // meta description と OGP(120文字以内)
+  links: { github: string; zenn: string; note: string; speakerDeck: string; x: string; email: string; resumePdf: '/resume.pdf' };
+};
+type Domain = { title: string /* 1〜30 */; description: string /* 1〜60 */; keywords: string[] /* 0〜4 */ }; // 2〜4個
+type MediaPolicyItem = { media: 'github' | 'zenn' | 'note' | 'slide'; role: string; description: string /* 1〜40 */ };
+// 4個ちょうど。リンク先は profile.links から引く(URL を二重に書かない)
+```
+
+### 記事の取り方
+
+- **Zenn**: 今のビルド時の API 取得(`lib/zenn.ts`)をそのまま使う。実装とテストと定期再ビルドがすでにあるため。
+- **note**: ビルド時に RSS(`https://note.com/<urlname>/rss`)を取る `lib/note.ts` を足す。失敗の扱い(warn して空、`NOTE_OFFLINE=1` で取らない、10秒のタイムアウト、最新5件)は Zenn と同じにする。静的な配列にしない理由: 投稿のたびにサイトを直すと二重管理になり、今回の変更の目的に反するため。RSS の読み取りには `fast-xml-parser` を使う(正規表現で XML を読まない)。RSS の形は T-001 と同じく、実装の前に確かめて README の「依存の確認記録」に書く(J-20261008-001)。
+- 空のときは、その列に「note の記事一覧 →」などのプロフィールへのリンクだけを出す。
+- 各行は媒体バッジ(`Zenn / Tech` か `note / Log`)、日付(`YYYY.MM.DD`)、タイトル(外部リンク)。
+
+### 媒体のアイコン
+
+- `components/icons/` に Zenn、note、Speaker Deck の単色の SVG を足す(`currentColor`。各社のブランド色は使わない。色の規律のため)。Lucide にブランドのアイコンはないので、形は各社の公開しているロゴを単色にしたものにする。
+- アイコンは `aria-hidden="true"` にし、媒体名は文字でも出す。
+
+### 原稿
+
+- AI は事実を作らない。新しい型の値は、今のリポジトリにある公開済みの値(氏名、GitHub、X、Email、Zenn のユーザー名)だけを入れ、それ以外(プロジェクト、領域、Timeline、note と Speaker Deck の URL)は `TODO(content)` 付きの仮の値にする。旧 Next.js 版の Works と About の文章は、事実として使える情報を含まないので移さない。
+- 開発者が実データ(例: DInSAR の解析パイプラインの共同実証実験、期間、成果の数値、note と Speaker Deck のアカウント)を書き込む。`npm run check:release` が `TODO(content)` で失敗するので、書き忘れは公開前に止まる。

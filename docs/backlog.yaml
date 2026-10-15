@@ -22,6 +22,9 @@ milestones:
 - id: M7
   title: 最終確認での直し
   goal: '最終確認の PR #36 のスクリーンショットで見つかった見た目の問題(OGP の長いタイトルのはみ出し、セクションの間の余白、375px の表と図)が直り、npm run verify が通る。'
+- id: M8
+  title: 1ページのハブ型への作り替え
+  goal: サイトが / の1ページだけになり、Hero / About & Media Policy / Featured Projects / Articles & Logs / Timeline から GitHub・Zenn・note・Speaker Deck へ直接案内する。詳細ページ、MDX、図の書き出し、プロジェクトごとの OGP がなくなり、npm run verify が通る。
 tasks:
 - id: T-001
   title: 依存ライブラリと外部仕様の確認記録(T-00)
@@ -572,4 +575,105 @@ tasks:
   - T-034
   size: S
   human_check: トップページを 375px とデスクトップ、ライトとダークで撮り、動きを減らす設定(コードを全部見せた静止画)でも、コードが PC の画面の枠の内側に収まっているかを見る。
+  status: todo
+- id: T-036
+  title: ハブ型のデータの型と読み出し関数を作る
+  milestone: M8
+  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う。画面はまだ変えない(今の表示と既存のテストはそのまま通す)。(1) src/lib/schemas.ts に、設計の型のとおりの Zod スキーマを足す: externalLink、period(end 省略可、end >= start)、projectEntry(id の形と字数の制約、techStack 3〜6個で重複なし、links の media の重複なし)、article、timelineItem、domain、mediaPolicyItem。今の projectSchema と zenn のスキーマは消さない。(2) src/lib/links.ts に、media ごとの既定の表示名を返す linkLabel と、github → zenn → note → slide → demo の順に並べる sortLinks を作る。(3) src/content/projects.ts と src/content/timeline.ts を作る。projects には今の2件(satellite-insar、rag-knowledge-base)を、今の MDX の title と period を引き継いで入れ、ほかの値は TODO(content) 付きの仮の値にする。timeline は TODO(content) 付きの仮の1件。(4) src/content/resume.ts の profile に coreTags(TODO(content) 付きの仮の3つ)と links.zenn(https://zenn.dev/riku_takata)・links.note・links.speakerDeck(どちらも TODO(content) 付きの仮の https の URL)を足し、resume に domains(仮の2つ)と mediaPolicy(設計の表の4媒体。role は表の「役割のラベル」、description は表の「置くもの」を40文字以内に縮めたもの)を足す。about、skills、experience はまだ消さない。(5) src/lib/content.ts に loadProjects()、loadFeaturedProjects()(selectFeatured を使う)、loadTimeline()(新しい順)、loadProfile() を作り、それぞれスキーマで parse してから返す。(6) tests/unit に、各スキーマの通る例と落ちる例、linkLabel と sortLinks、timeline の並び、今のデータが全部 parse できることのテストを足す。AI は事実を作らない: 公開済みでない値は TODO(content) にする。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - src/lib/schemas.ts に設計の型に対応するスキーマがあり、tests/unit で各スキーマの通る例と落ちる例(字数超え、techStack が2個や7個、media の重複、http の URL、end < start)を確かめている
+  - loadProjects / loadFeaturedProjects / loadTimeline / loadProfile が今のデータを parse して返すことを tests/unit で確かめている
+  - sortLinks が github → zenn → note → slide → demo の順に並べ、linkLabel が設計の既定の表示名を返す
+  - dist/index.html の表示が変わっていない(既存の tests/dist がそのまま通る)
+  - npm run verify が通る
+  depends_on: []
+  size: M
+  status: todo
+- id: T-037
+  title: note の記事をビルド時に RSS から取る
+  milestone: M8
+  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う。(1) 実装の前に、note の RSS(https://note.com/<urlname>/rss)の形(item の title、link、pubDate)を公式の情報か実物で確かめ、README.md の「依存の確認記録」に、確かめた日と出典と fast-xml-parser の版を書く。確かめられなかったものは「未確認」と書く(J-20261008-001)。(2) fast-xml-parser を dependencies に足す。(3) src/lib/note.ts に fetchLatestNotes(rssUrl, count = 5) を作る。rssUrl は resume.ts の profile.links.note から組み立てる(URL を二重に書かない)。振る舞いは lib/zenn.ts と同じにする: 10秒のタイムアウト、HTTP エラー・通信エラー・形の違いでは console.warn を1回出して [] を返す、NOTE_OFFLINE=1 なら取らずに []、新しい順で最大 count 件。返す形は設計の Article 型(media: ''note'')。pubDate は ISO 8601 にして返す。(4) Zenn の取得結果も Article 型(media: ''zenn'')で返せるよう、lib/zenn.ts に変換関数を足すか戻り値を Article にする(既存の zenn.test.ts は戻り値の形に合わせて直してよい)。(5) tests/unit/note.test.ts を足す(fetch はモック): 正常な RSS から件数と値を正しく取る、HTTP 500・タイムアウト・壊れた XML・item がない RSS では [] と warn 1回、NOTE_OFFLINE=1 で fetch を呼ばない。(6) .github/workflows/ci.yml で ZENN_OFFLINE を設定している箇所があれば、NOTE_OFFLINE も同じように設定する。画面はまだ変えない。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - README.md の依存の確認記録に note の RSS と fast-xml-parser の確認(日付・出典、または未確認)がある
+  - tests/unit/note.test.ts が、正常時の値、HTTP 500・タイムアウト・壊れた XML・空の RSS で [] と warn 1回、NOTE_OFFLINE=1 で fetch を呼ばないことを確かめている
+  - note.ts が profile.links.note から RSS の URL を作り、ソースに note.com の URL を直接書いていない
+  - npm run verify が通る
+  depends_on:
+  - T-036
+  size: M
+  status: todo
+- id: T-038
+  title: Hero と About & Media Policy を作り替え、Skills をなくす
+  milestone: M8
+  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う。(1) src/components/icons/ に Zenn、Note、SpeakerDeck の単色の SVG アイコンを、既存の Github.astro と同じ形(currentColor、aria-hidden)で足す。(2) Hero.astro: focus の行を coreTags の Badge の並びに変え、リンクを GitHub / Zenn / note / Speaker Deck / X / Mail / Resume (PDF) の順にする(値は loadProfile() から)。机のイラスト、余白、h1 は変えない。(3) About.astro を「About & Media Policy」にする: h2 は About のまま、id は #about のまま。domains を小さなカード(border と rounded-lg、影なし。sm 以上で2列の grid)で出し、その下に h3「Media Policy」と、mediaPolicy の4件をミニカード(アイコン、媒体名、role を等幅の小さな文字で、description、プロフィールへの外部リンク)で出す。リンク先は profile.links から引く。resume.about の段落は出さない。(4) index.astro から Skills セクションを外し、Skills.astro を消す。Header の nav から Skills を外す。#skills や About の段落を確かめている既存のテスト(tests/dist と tests/unit)は、その確かめだけを消すか新しい構成に合わせて直す。(5) tests/dist に hub-about.test.ts を足し、下の受け入れ基準の 1〜3 を確かめる。色の規律(zinc と indigo だけ、ブランド色を使わない)と Zero-JS は守る。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 'dist/index.html の #top に coreTags の数だけ Badge があり、GitHub・Zenn・note・Speaker Deck・X・Mail・Resume (PDF) のリンクがこの順にある'
+  - 'dist/index.html の #about に domains の数のカードと、Media Policy の4件(GitHub、Zenn、note、Speaker Deck)があり、各件に role の文字と target="_blank" rel に noopener を含む外部リンクがある'
+  - dist/index.html に id="skills" がなく、Header の nav に Skills がない
+  - npm run verify が通る
+  depends_on:
+  - T-036
+  size: M
+  human_check: トップを 375px とデスクトップ、ライトとダークで撮り、Hero のタグとリンクの並び、About のカードと Media Policy のミニカードが引き締まって見えるか、媒体のアイコンが読めるかを見る。
+  status: todo
+- id: T-039
+  title: Featured Projects をティーザー型のカードにする
+  milestone: M8
+  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う。(1) ProjectsList.astro を loadFeaturedProjects() から作るようにする(MDX のコレクションを読まない)。h2 と #projects はそのまま。(2) ProjectCard.astro を作り替える。上から: context.label の Badge と期間(formatYearMonth で 2025.08 – 2025.12、進行中は Present)、h3 に title、summary(1行)、highlight(font-medium で、左に border-l-2 の zinc の線と pl-3。絵文字は使わない)、techStack の Badge、links を sortLinks の順で LinkButton(媒体のアイコン + linkLabel、外部リンク)。links がないときはボタンの行を出さない。「技術解説を読む →」と /projects/ へのリンクは消す。カード全体を1つのリンクにはしない。(3) 期間の表示の関数が要れば src/lib/format.ts に純粋関数で足し、tests/unit で確かめる。(4) tests/dist/projects.test.ts の、/projects/ への詳細リンクや outcomes を確かめる部分を、新しいカードの中身(下の受け入れ基準)に合わせて直す。詳細ページそのもの(dist/projects/)はこのタスクでは消さない。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 'dist/index.html の #projects に featured の件数分の <article> があり、各カードに context.label、期間、title の h3、summary、highlight、techStack の Badge がある'
+  - カードの外部リンクが sortLinks の順に並び、文字に linkLabel を含み、target="_blank" と rel に noopener がある
+  - dist/index.html に href が /projects/ で始まるリンクがない
+  - npm run verify が通る
+  depends_on:
+  - T-036
+  size: M
+  human_check: トップの Featured Projects を 375px とデスクトップ、ライトとダークで撮り、highlight が一番目に入るか、リンクのボタンの並びと文字が読みやすいかを見る。
+  status: todo
+- id: T-040
+  title: Articles & Logs で Zenn と note を2列に分けて出す
+  milestone: M8
+  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う。(1) index.astro で Zenn と note の記事を両方ビルド時に取る(T-037 の関数)。(2) Articles.astro を作り替える: h2 は「Articles & Logs」、id は #articles のまま。sm 以上で2列、375px では縦に、左(上)を Zenn(h3「Tech Deep Dive」)、右(下)を note(h3「Context & Log」)にする。タブにはしない。各行は媒体バッジ(Zenn / Tech か note / Log。Badge で等幅、zinc の色だけ)、日付(formatDate の YYYY.MM.DD、<time datetime>)、タイトル(外部リンク)。各列の末尾に「Zenn の記事一覧 →」「note の記事一覧 →」(profile.links から)を出す。取れなかった列は、一覧を出さずにこのリンクだけを出す。(3) tests/dist/articles.test.ts を新しい構成に合わせて直す。CI と test:dist は ZENN_OFFLINE=1 と NOTE_OFFLINE=1 で動くので、記事がないときの表示(2つの列の見出しと一覧へのリンクがある)を確かめる。記事があるときの並び・バッジ・日付の形は、Article の配列から行のデータを作る純粋関数を src/lib に作り、tests/unit で確かめる。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 'dist/index.html の #articles に h2「Articles & Logs」と、h3「Tech Deep Dive」と「Context & Log」の2つの列がある'
+  - 2つの列の末尾に、profile.links.zenn と profile.links.note への外部リンク(target="_blank"、rel に noopener)がある
+  - 記事の行のデータ(媒体バッジの文字、YYYY.MM.DD の日付、新しい順)を作る関数を tests/unit で確かめている
+  - dist の HTML の <script> が増えていない(Vercel Analytics だけ)
+  - npm run verify が通る
+  depends_on:
+  - T-037
+  size: M
+  human_check: Vercel の Preview で、Zenn と note の記事が実際に2列に分かれて出るか、375px で縦に並ぶかを見る。
+  status: todo
+- id: T-041
+  title: Experience を Timeline に置き換える
+  milestone: M8
+  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う。(1) src/components/sections/Timeline.astro を作る: h2 は「Timeline」、id は #timeline。loadTimeline() の項目を新しい順に、左の縦線(border-l)の <ol> で並べる。各項目: 期間(<time datetime="YYYY-MM">、表示は 2025.08 か 2025.08 – 2025.12、end が present なら Present)、種別のラベル(education=Education、research=Research、exhibition=Exhibition、presentation=Presentation、conference=Conference、internship=Internship、work=Work)、title、org、links を sortLinks の順に小さなインラインの外部リンク(アイコン + linkLabel)で。(2) 種別のラベルと期間の表示は src/lib の純粋関数にし、tests/unit で確かめる。(3) index.astro の Experience を Timeline に置き換え、Experience.astro と、format.ts の experience 用の関数(experienceKindLabel、sortExperience、formatExperiencePeriod など)とそのテストを消す。Header の nav を About / Projects / Articles / Timeline の順にする。#experience を確かめている既存のテストは #timeline に直す。(4) tests/dist に timeline.test.ts を足し、下の受け入れ基準の 1 と 2 を確かめる。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 'dist/index.html に #timeline の <ol> があり、loadTimeline() の件数分の <li> が新しい順に並び、各 <li> に <time datetime> と種別のラベルがある'
+  - 項目の links が外部リンク(target="_blank"、rel に noopener)として出る
+  - dist/index.html に id="experience" がなく、Header の nav が About / Projects / Articles / Timeline の順
+  - npm run verify が通る
+  depends_on:
+  - T-036
+  size: M
+  human_check: トップの Timeline を 375px とデスクトップ、ライトとダークで撮り、縦線と期間とリンクが詰まりすぎていないかを見る。
+  status: todo
+- id: T-042
+  title: 詳細ページ、MDX、図の書き出し、使わなくなったデータを消す
+  milestone: M8
+  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う。(1) 消す: src/pages/projects/、src/layouts/ProjectLayout.astro、src/components/mdx/、src/content/projects/(MDX)、src/content.config.ts のコレクション(ファイルごと消してよい)、src/assets/diagrams/、scripts/build-diagrams.mjs と scripts/lib/diagrams.mjs、mermaid.config.json、docs/project-template.mdx、package.json の diagrams スクリプト、@astrojs/mdx・@tailwindcss/typography・@mermaid-js/mermaid-cli、astro.config.mjs の mdx() と shikiConfig、global.css の typography と Shiki の CSS、旧 projectSchema、jsonld.ts の buildCreativeWorkJsonLd、resume.ts の about・skills・experience と focus。(2) OGP: src/pages/og/[slug].png.ts を、index だけを作る形にする(ファイル名を og/index.png.ts にしてよい。BaseLayout の ogImage は /og/index.png のまま)。(3) check-release: MDX の h2 の警告と図の鮮度のチェックを消し、featured が2件未満の判定を src/content/projects.ts から行う。TODO(content) と resume.pdf のチェックは残す。(4) 消したものだけを確かめていたテスト(detail・detail-body・figure・diagrams・content の MDX の部分、og と jsonld と seo の詳細ページの部分)を消すか直す。ほかのテストは変えない。(5) README.md の原稿の書き方の節を、src/content/*.ts の書き方に直す。npm ci で lock を更新する。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/ に projects/ ディレクトリと、og/index.png 以外の PNG がない。dist/index.html と dist/404.html だけが HTML のページ
+  - sitemap に / だけが入っている
+  - package.json に @astrojs/mdx、@tailwindcss/typography、@mermaid-js/mermaid-cli と diagrams スクリプトがなく、src/ に .mdx がない
+  - npm run check:release が TODO(content) と resume.pdf で失敗し、MDX と図の項目を出さない
+  - npm run verify が通る
+  depends_on:
+  - T-038
+  - T-039
+  - T-040
+  - T-041
+  size: M
+  human_check: Vercel の Preview で /projects/<slug>/ が 404 になり、トップの1ページですべての外部リンクが新しいタブで開くかを見る。
   status: todo
