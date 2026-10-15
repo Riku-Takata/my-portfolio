@@ -10,7 +10,7 @@ const notFoundPath = fileURLToPath(
 const html = existsSync(notFoundPath)
   ? readFileSync(notFoundPath, 'utf-8')
   : '';
-const body = html.match(/<body\b[^>]*>([\s\S]*)<\/body>/)?.[1] ?? '';
+const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1] ?? '';
 const text = (s: string) => s.replace(/<[^>]*>/g, '').trim();
 
 describe('dist/404.html', () => {
@@ -24,13 +24,13 @@ describe('dist/404.html', () => {
     expect(text(inner)).toBe('ページが見つかりません');
   });
 
-  it('body の <a> は href="/" の1つだけで、テキストが「トップへ戻る」', () => {
-    const anchors = startTags(body, 'a').map(attrs);
+  it('main の <a> は href="/" の1つだけで、テキストが「トップへ戻る」', () => {
+    const anchors = startTags(main, 'a').map(attrs);
     expect(anchors).toHaveLength(1);
     expect(anchors[0].get('href')).toBe('/');
     expect(anchors[0].has('target')).toBe(false);
     expect(anchors[0].has('rel')).toBe(false);
-    const inner = body.match(/<a\b[^>]*>([\s\S]*?)<\/a>/)?.[1] ?? '';
+    const inner = main.match(/<a\b[^>]*>([\s\S]*?)<\/a>/)?.[1] ?? '';
     expect(text(inner)).toBe('トップへ戻る');
   });
 
