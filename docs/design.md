@@ -232,6 +232,7 @@ type Resume = {
   | 技術タグとコード | `font-mono text-xs` |
 
 - **動き**: 使ってよいのは `transition-colors duration-150` だけ(ホバーで背景色や文字色が変わる程度)。`animate-*`、`transform`、`rotate`、`scale`、`backdrop-blur`、スムーズスクロールは使わない。
+  - 例外: Hero の机のイラスト(`sections/DeskIllustration.astro`)の中だけ、湯気とタイピングの `@keyframes` を使ってよい(F-02)。`prefers-reduced-motion: reduce` では止める。
 - **フォント**: `global.css` の `@theme` で次のように決める。
   - `--font-sans: "Geist Variable", <和文システムフォント>, sans-serif`
   - `--font-mono: "JetBrains Mono Variable", ui-monospace, monospace`
@@ -259,7 +260,11 @@ type Resume = {
 - リンクを横に並べる(アイコン + テキスト。アイコンは `aria-hidden`)。
   - GitHub / X / Mail(`mailto:`)/ Resume (PDF)(`/resume.pdf`)
   - 外部リンクには `target="_blank" rel="noopener noreferrer"` を付ける。
-- 写真と画像は置かない。
+- 写真は置かない。例外として、机の上のノート PC とコップのイラスト(`sections/DeskIllustration.astro`、インラインの SVG)を置く。
+  - 置き場所: デスクトップでは名前とリンクの右、375px では名前の上に小さく置く。装飾なので `aria-hidden="true"` にする。
+  - 絵: 旧版の DeskAnimation(机、ノート PC、コップ、本)の構図を引き継ぎ、色は zinc と indigo に塗り直して線画寄りにする。ライトとダークで、線と面の色を `prefers-color-scheme` で切り替える。
+  - 動き: コップの湯気(`stroke-dasharray` の `@keyframes`)と、PC の画面のコードを行ごとに見せていくタイピング(`steps()` の `@keyframes`)の2つだけ。JS は使わない。`prefers-reduced-motion: reduce` では動きを止め、コードを全部見せた静止画にする。
+  - 変更の経緯: 当初は「画像は置かない」「DeskAnimation は捨てる」としていたが、最終確認(PR #36)で開発者から「遊び心のある演出は残したい。今のままだと殺風景」と指摘があり、Hero の机の絵だけを、色の規律と Zero-JS を守る形で戻すことにした(T-034)。
 
 ### F-03 About(`sections/About.astro`)、`#about`
 
@@ -368,7 +373,7 @@ type Resume = {
 
 | パス | 理由 |
 |---|---|
-| `app/` 一式(`layout.tsx`, `page.tsx`, `globals.css`, `components/*`, `components/welcome/*`, `api/articles/route.ts`) | Next.js 版の本体。Welcome / DeskAnimation / Loader / Works のネオンカード / 3D の Zenn カルーセルは、前提のとおり捨てる |
+| `app/` 一式(`layout.tsx`, `page.tsx`, `globals.css`, `components/*`, `components/welcome/*`, `api/articles/route.ts`) | Next.js 版の本体。Welcome / Loader / Works のネオンカード / 3D の Zenn カルーセルは、前提のとおり捨てる。DeskAnimation は、構図だけを引き継いで Hero のイラストとして作り直す(F-02、T-034) |
 | `components/ui/*`, `components.json`, `hooks/use-toast.ts`, `lib/utils.ts` | shadcn/ui 一式 |
 | `styles/*.module.css` | DeskAnimation と Loader 用 |
 | `next.config.ts`, `tailwind.config.ts`, `postcss.config.mjs`, `eslint.config.mjs`, `tsconfig.json` | Astro 用に作り直す |
