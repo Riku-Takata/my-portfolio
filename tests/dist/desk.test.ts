@@ -240,3 +240,67 @@ describe('Hero DeskIllustration (T-034)', () => {
     expect(content).not.toMatch(animateToken);
   });
 });
+
+function deskCodeTexts(): {
+  attrs: Map<string, string>;
+  text: string;
+  index: number;
+}[] {
+  const html = readDist('index.html');
+  const top = getTopSection(html);
+  const topWithoutLinks = top.html.replace(/<a\b[\s\S]*?<\/a\s*>/gi, '');
+  const svgMatch = /<svg(?=[\s>/])[^>]*>/i.exec(topWithoutLinks);
+  if (!svgMatch) return [];
+  const svgStart = top.html.indexOf(svgMatch[0]);
+  const svgEl = outerOf(top.html, svgStart, 'svg');
+
+  const matches = [
+    ...svgEl.html.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi),
+  ];
+  const results: {
+    attrs: Map<string, string>;
+    text: string;
+    index: number;
+  }[] = [];
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    const a = attrs(`<text ${m[1]}>`);
+    const cls = a.get('class') ?? '';
+    const tokens = cls.split(/\s+/).filter(Boolean);
+    if (tokens.includes('desk-code')) {
+      const text = decode(m[2].replace(/<[^>]+>/g, '')).trim();
+      results.push({ attrs: a, text, index: i });
+    }
+  }
+  return results;
+}
+
+describe('Hero DeskIllustration code fits screen (T-035)', () => {
+  it('AC-3: desk-code の <text> のどれも、x + 文字数 × 0.6 × font-size が 35 以下である', () => {
+    const texts = deskCodeTexts();
+    expect(texts.length).toBeGreaterThanOrEqual(1);
+    for (const item of texts) {
+      const xStr = item.attrs.get('x');
+      const fsStr = item.attrs.get('font-size');
+      const x = Number(xStr);
+      const fs = Number(fsStr);
+      expect(Number.isFinite(x)).toBe(true);
+      expect(Number.isFinite(fs)).toBe(true);
+      const charCount = [...item.text].length;
+      expect(x + charCount * 0.6 * fs).toBeLessThanOrEqual(35 + 1e-9);
+    }
+  });
+
+  it('AC-4: desk-code の <text> のどれも、y が 18 以上 27 以下である', () => {
+    const texts = deskCodeTexts();
+    expect(texts.length).toBeGreaterThanOrEqual(1);
+    for (const item of texts) {
+      const yStr = item.attrs.get('y');
+      const y = Number(yStr);
+      expect(Number.isFinite(y)).toBe(true);
+      expect(y).toBeGreaterThanOrEqual(18);
+      expect(y).toBeLessThanOrEqual(27);
+    }
+  });
+});
+
