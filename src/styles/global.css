@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/jetbrains-mono";
+@plugin "@tailwindcss/typography";
+
+/* テストと設計書の中のクラス名の文字列から、使わない規則を作らせない */
+@source not "../../tests";
+@source not "../../docs";
+
+@theme {
+  --font-sans:
+    "Geist Variable", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+/* Shiki が style 属性に書くライトの色を、OS がダークのときだけ上書きする */
+@media (prefers-color-scheme: dark) {
+  .astro-code,
+  .astro-code span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+  }
+}
+
+/* sticky の Header(h-14 と下の境界線)に、アンカーで飛んだ先の見出しが隠れないようにする */
+html {
+  scroll-padding-top: 4rem;
+}

@@ -1,0 +1,575 @@
+schema_version: '1.0'
+product: my-portfolio
+milestones:
+- id: M1
+  title: 検証の土台
+  goal: renewal ブランチで旧 Next.js 版を消し、Astro の静的サイトの骨組みが動く。npm ci && npm run verify(check → lint → format:check → test → build → test:dist)がローカルと CI の両方で通る。依存の版と出典が README に記録され、デザイン規律を機械で確かめるテストが常に流れる。
+- id: M2
+  title: データ層
+  goal: プロジェクトの MDX(Content Collections + Zod)、resume.ts、Zenn 記事のビルド時取得、整形用の純粋関数がそろい、ユニットテストで振る舞いを確かめられる。frontmatter に違反があれば astro build が失敗する。
+- id: M3
+  title: トップページ
+  goal: / に Hero / About / Featured Projects / Technical Skills / Experience & Education / Articles と Footer が出る。BaseLayout がメタ情報とフォントと Analytics を出し、クライアント JS は Vercel Analytics だけになる。
+- id: M4
+  title: プロジェクト詳細ページと図
+  goal: /projects/<slug>/ が全件生成され、MDX 本文が prose で組まれる。Shiki の2テーマ、表の横スクロール、手元で書き出した Mermaid の SVG を Figure で表示できる。
+- id: M5
+  title: OGP と SEO
+  goal: ページごとの OGP PNG(1200×630)がビルド時に作られ、sitemap-index.xml と robots.txt が出る。全ページの canonical と og:image が絶対 URL で正しい。
+- id: M6
+  title: 運用と公開の準備
+  goal: 定期再ビルドのワークフロー、公開前チェック(npm run check:release)、新しい README がそろい、開発者が原稿をそろえて main にマージできる状態になる。
+- id: M7
+  title: 最終確認での直し
+  goal: '最終確認の PR #36 のスクリーンショットで見つかった見た目の問題(OGP の長いタイトルのはみ出し、セクションの間の余白、375px の表と図)が直り、npm run verify が通る。'
+tasks:
+- id: T-001
+  title: 依存ライブラリと外部仕様の確認記録(T-00)
+  milestone: M1
+  request: '詳細設計「構成」の表で「未確認」とした項目と、「検証の方針 > Stage 0 > T-00」の一覧を、公式ドキュメントと npm レジストリで確かめ、README.md に「依存の確認記録」の節を足して、確かめた版・確かめた日・出典 URL を書く。対象: Astro / @astrojs/mdx / @astrojs/sitemap / @astrojs/check の最新の安定版、Tailwind CSS の最新の安定版と Astro での推奨の組み込み方(@tailwindcss/vite が推奨か、@astrojs/tailwind は非推奨か)、@tailwindcss/typography、@vercel/analytics の Astro 用コンポーネント(@vercel/analytics/astro)の提供の形と静的出力で動くか、satori、@resvg/resvg-js、@mermaid-js/mermaid-cli、Vitest(projects の機能)、@fontsource-variable/geist と jetbrains-mono、Lucide がブランドアイコンを含むか、ESLint の flat config と eslint-plugin-astro / typescript-eslint / prettier-plugin-astro、Astro が対応する Node の範囲(22 系 LTS でよいか)、Zenn API(https://zenn.dev/api/articles)の仕様が公開されているか、GitHub Actions の schedule が止まる条件(リポジトリが60日間動かないと止まる扱い)、Vercel の Framework Preset を Astro に変える手順と Preview の Deployment Protection。確かめられなかったものは「未確認」と書く(ナレッジ J-20261008-001)。設計の前提と違う事実が見つかったら(例: Tailwind v4 で @tailwindcss/vite が推奨でない)、README の同じ節に「設計との差」として書き、PR の説明でも知らせる。このタスクではコードを変えない。'
+  acceptance:
+  - README.md に「依存の確認記録」の節があり、列挙した各項目について、版(またはは結論)、確かめた日、出典 URL、または「未確認」が書かれている
+  - Zenn API が公式に公開された仕様かどうかの結論が書かれている
+  - GitHub Actions の schedule の停止条件についての結論と出典が書かれている
+  - 設計の前提と違う点があれば「設計との差」として列挙されている(なければ「なし」と書かれている)
+  - README.md 以外のファイルに変更がない
+  depends_on: []
+  size: S
+  human_check: 出典が公式のもの(公式ドキュメント、npm、GitHub の公式リポジトリ)になっているかを目で確かめる。
+  status: todo
+- id: T-002
+  title: 旧 Next.js 版の削除と Astro の骨組み
+  milestone: M1
+  request: '詳細設計「既存のコードからの移行」に従い、renewal ブランチ向けの PR で旧コードを消し、Astro の静的サイトの骨組みを入れる。消すもの: app/ 一式、components/ui/*、components.json、hooks/use-toast.ts、lib/utils.ts、styles/*.module.css、next.config.ts、tailwind.config.ts、postcss.config.mjs、eslint.config.mjs、tsconfig.json、public/ の file.svg・globe.svg・next.svg・vercel.svg・window.svg・naptop.jpg、package.json の依存すべて(package-lock.json は作り直す)。移すもの: app/icon.png → public/favicon.png(大きければ 512px 以下に縮める)。.gitignore は /.next/ と next-env.d.ts を消し、/dist/ と /.astro/ を足す(/materials、.env*、.vercel は残す)。入れるもの: T-001 で確かめた版の Astro、astro.config.mjs(output:''static''、site は lib/site.ts の SITE_URL と同じ仮の値 https://my-portfolio-riku-takata.vercel.app に TODO(content) を付ける、trailingSlash:''always''、build.format:''directory'')、src/lib/site.ts(SITE_URL、SITE_NAME、ZENN_USERNAME=''riku_takata'')、tsconfig.json(astro/tsconfigs/strict を継承)、vercel.json({ "trailingSlash": true })、.nvmrc と package.json の engines(Node 22 系 LTS)、Tailwind(「構成」の表のとおり @tailwindcss/vite を vite.plugins に入れ、src/styles/global.css は @import "tailwindcss" だけでよい)、最小の src/layouts/BaseLayout.astro(<html lang="ja">、title、meta description、color-scheme、favicon。完全な F-01 は T-011)、中身が空に近い src/pages/index.astro。npm scripts は check(astro check)と build(astro build)をこのタスクで入れる。'
+  acceptance:
+  - 旧コードの一覧(app/、components/ui、shadcn 関連、Next.js の設定、public の雛形画像と naptop.jpg)がリポジトリにない
+  - package.json に next、react、framer-motion、radix、shadcn-ui、react-icons、recharts、sass、stylus、stylelint 系、add、tabs が入っていない
+  - public/favicon.png があり、512px 以下である
+  - .gitignore に /dist/ と /.astro/ があり、/.next/ がない
+  - npm ci && npm run check && npm run build が通り、dist/index.html ができて <html lang="ja"> を含む
+  - astro.config.mjs の site と src/lib/site.ts の SITE_URL が同じ値で、TODO(content) が付いている
+  - 'vercel.json が { "trailingSlash": true } で、.nvmrc と engines が Node 22 系を指す'
+  depends_on:
+  - T-001
+  size: M
+  human_check: ''
+  status: todo
+- id: T-003
+  title: lint・format・Vitest(unit/dist)・verify・CI の導入
+  milestone: M1
+  request: '詳細設計「検証の方針 > npm scripts」と「Stage 0 > T-01」に従い、検証の仕組みを入れる。ESLint(flat config の eslint.config.js、eslint-plugin-astro、typescript-eslint)、Prettier(.prettierrc、prettier-plugin-astro)、@astrojs/check、Vitest(vitest.config.ts で projects を unit = tests/unit と dist = tests/dist に分ける)。npm scripts に lint(eslint .)、format:check(prettier --check .)、test(vitest run --project unit)、test:dist(vitest run --project dist)、verify(check → lint → format:check → test → build → test:dist を順に流す)を足す。tests/dist に最小のテストを1本置く(dist/index.html があり、lang="ja" になっている)。tests/unit にも、後のタスクが足していけるよう最小のテストを1本置く(例: lib/site.ts の SITE_URL が https で始まり末尾が / でない)。.github/workflows/ci.yml を作り、push と pull_request で Node(.nvmrc の版)を入れて npm ci → check → lint → format:check → test → build → test:dist を流す。'
+  acceptance:
+  - npm ci && npm run verify がローカルで通る
+  - PR 上で ci.yml のジョブが緑になる
+  - dist/index.html を消してから npm run test:dist を流すと失敗する
+  - lint に違反する .ts を src/ に置くと npm run lint が失敗する
+  - 整形されていないファイルがあると npm run format:check が失敗する
+  - vitest.config.ts に unit と dist の2つのプロジェクトがあり、npm test は unit だけを流す
+  depends_on:
+  - T-002
+  size: M
+  human_check: ''
+  status: todo
+- id: T-004
+  title: デザイン規律と Zero-JS を確かめるソースのテスト
+  milestone: M1
+  request: '詳細設計「検証の方針 > ユニットテスト > source-rules.test.ts」を tests/unit/source-rules.test.ts として実装する。src/**/*.{astro,ts,css} を読み(MDX の本文は技術解説の英文で誤検知するので対象にしない)、次の文字列が出たら失敗にする: animate-、transition-colors 以外の transition-、duration-150 以外の duration-、bg-gradient / bg-linear / from- / via- / to-(グラデーション)、zinc と indigo 以外の Tailwind の色名((bg|text|border|ring|outline|fill|stroke)-(red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|violet|purple|fuchsia|pink|rose|slate|gray|neutral|stone)-\d のような形)、rounded-full。また src/ に .tsx / .jsx ファイルと client: ディレクティブがあれば失敗にする。デザイン規律の出典は「画面・機能 > 共通のデザイン規律」の「色」と「動き」。誤検出を避けるため、Tailwind のクラスとして現れる形(単語の境界)で判定し、テストでは違反の例と、違反でない例(例: to- を含む普通の単語、transition-colors、duration-150)をそれぞれ持つ。'
+  acceptance:
+  - 今の src/ に対して npm test が通る
+  - src/ の .astro に animate-spin、transition-all、duration-300、bg-gradient-to-r、from-zinc-50、text-red-500、rounded-full のどれかを入れると失敗する
+  - transition-colors、duration-150、text-zinc-500、text-indigo-600 は失敗にならない
+  - 'src/ に .tsx ファイル、または client:load などの client: ディレクティブを置くと失敗する'
+  - 判定の関数に、違反の例と違反でない例の両方のテストケースがある
+  - src/content の MDX の本文に transition や duration を含む英文があっても失敗しない
+  depends_on:
+  - T-003
+  size: S
+  human_check: ''
+  status: todo
+- id: T-005
+  title: 整形の純粋関数(format.ts)と経歴の並べ替え
+  milestone: M2
+  request: '詳細設計「ディレクトリとモジュール」の src/lib/format.ts を作る。Astro のランタイムに依存しない純粋な TypeScript にする(「モジュールの境界」)。formatPeriod({ start, end }): ''YYYY-MM'' から年を取り「2025 – 2026」、end が ''present'' なら「2025 – Present」、開始と終了が同じ年なら「2025」(F-04、ユニットテスト format.test.ts)。formatYearMonth(''YYYY-MM'') → 「2024.04」(F-06 の表示「2024.04 – 2026.03」用)。formatDate(ISO の日時) → 「YYYY.MM.DD」(F-07 用。日付は JST で決める)。経歴を start の降順で並べる純粋関数 sortExperience(「データとコンテンツ > プロフィール・経歴」)も同じファイルに置く。tests/unit/format.test.ts を書く。'
+  acceptance:
+  - formatPeriod({start:'2025-04', end:'2026-03'}) が '2025 – 2026'(区切りは en dash と前後の空白)を返す
+  - formatPeriod({start:'2025-04', end:'present'}) が '2025 – Present' を返す
+  - formatPeriod({start:'2025-01', end:'2025-09'}) が '2025' を返す
+  - formatYearMonth('2024-04') が '2024.04' を返す
+  - formatDate('2025-01-01T00:30:00+09:00') が '2025.01.01' を返す
+  - sortExperience が start の降順に並べ、元の配列を書き換えない
+  - 'src/lib/format.ts が astro: で始まるモジュールを import していない'
+  - npm test が通る
+  depends_on:
+  - T-003
+  size: S
+  human_check: ''
+  status: todo
+- id: T-006
+  title: プロジェクトの frontmatter スキーマと selectFeatured
+  milestone: M2
+  request: '詳細設計「データとコンテンツ > プロジェクト」に従い、src/lib/schemas.ts に projectSchema(z は ''astro/zod'' から import)を、src/lib/projects.ts に selectFeatured() と sortProjects() を作る。projectSchema の制約: title は 1〜60文字、period は { start:''YYYY-MM'', end:''YYYY-MM''|''present'' } で end >= start、summary は 1〜100文字で改行なし、tech は string[] で 1〜8個かつ重複なし、outcomes は string[] で 1〜3個かつ各60文字以内、links は { demo?: url, github?: url } で https のみ、featured は boolean、order は 1 以上の整数。selectFeatured(projects) は featured のものだけを order の昇順で返し、featured が4件以上、または featured どうしで order が重なると throw する(「コレクションをまたぐ制約」)。sortProjects は order の昇順。どちらも Astro のランタイムに依存しない(「モジュールの境界」。''astro/zod'' は tests/unit から import できることを確かめる)。tests/unit/schemas.test.ts と tests/unit/projects.test.ts を「検証の方針 > ユニットテスト」のとおりに書く。'
+  acceptance:
+  - 正しい frontmatter が projectSchema を通る
+  - '必須項目の欠落、summary が101文字、summary に改行、period の形式違い、end < start、tech が空、tech の重複、tech が9個、outcomes が4個、http: の URL のそれぞれで失敗する'
+  - end が 'present' のとき start との大小の検査をしない
+  - selectFeatured が featured でないものを除き、order の昇順で返す
+  - featured が4件のとき、featured どうしで order が重なるときに throw する
+  - npm test が通る
+  depends_on:
+  - T-003
+  size: M
+  human_check: ''
+  status: todo
+- id: T-007
+  title: projects コレクションと仮原稿2件、原稿の雛形
+  milestone: M2
+  request: '詳細設計「データとコンテンツ > プロジェクト」と「本文の書き方」「原稿がそろうまで」に従う。@astrojs/mdx を入れ、src/content.config.ts に projects コレクション(glob loader: src/content/projects/*.mdx、schema は lib/schemas.ts の projectSchema)を定義する。仮原稿 src/content/projects/satellite-insar.mdx と rag-knowledge-base.mdx を置く。frontmatter は有効な値にし(2件とも featured: true、order は 1 と 2)、本文と frontmatter の要所に TODO(content) を入れる。本文は素案4章の見出し(## 1. 概要 & 解決したい課題 (Why) / ## 2. システムアーキテクチャ / ## 3. 技術選定とトレードオフ / ## 4. 技術的な課題と解決プロセス)にし、3章に GFM の表を1つ、どこかにコードブロックを1つ入れる。本文に「# 」の見出しは書かない。docs/project-template.mdx に、4章の見出しと frontmatter の例を書いた雛形を置く(素案の「# [プロジェクト名]」は取り除く)。tests/unit/content.test.ts を書く: すべての MDX の本文に行頭が「# 」の見出しがない(コードブロックの中は除く)、slug(ファイル名)が ^[a-z0-9]+(-[a-z0-9]+)*$ に合い、index でない。'
+  acceptance:
+  - npm run build が通る
+  - 仮原稿の frontmatter の summary を101文字にすると npm run build が失敗する
+  - src/content/projects/ に Index.mdx や index.mdx、foo_bar.mdx を置くと npm test が失敗する
+  - '本文に行頭の「# 見出し」を書くと npm test が失敗する(コードブロック内の # コメントは失敗にならない)'
+  - 仮原稿2件に TODO(content) があり、4章の h2、GFM の表、コードブロックがそれぞれ入っている
+  - docs/project-template.mdx に4章の見出しと frontmatter の例があり、「# 」の見出しがない
+  depends_on:
+  - T-006
+  size: M
+  human_check: ''
+  status: todo
+- id: T-008
+  title: resume.ts(プロフィール・About・スキル・経歴の型と初期値)
+  milestone: M2
+  request: '詳細設計「データとコンテンツ > プロフィール・経歴」に従い、src/content/resume.ts を作る。Resume 型を同じファイルで export し、データは export const resume = { … } satisfies Resume と書く。型: profile(nameJa、nameEn、affiliation、focus: string[]、summary: 120文字以内、links: { github, x, email, resumePdf: ''/resume.pdf'' })、about: string[](1〜4段落)、skills: { category, items: string[] }[](星や数値は持たない)、experience: { kind: ''education''|''internship''|''presentation''|''work'', title, org, start: ''YYYY-MM'', end?: ''YYYY-MM''|''present'', note? }[]。初期値: 氏名は 高田 莉玖 / Riku Takata、GitHub は https://github.com/Riku-Takata、X は https://x.com/tk1_chestnut(開発者に確かめた値)、Email は RikuChestnut66@gmail.com。所属は旧 Hero.tsx の値を git 履歴から写す。About・スキル・経歴は TODO(content) 付きの仮の値にし、旧 About.tsx の文章は下書きとしてコメントに残してよい。型で表しにくい制約(summary の文字数、about の段落数、start の形式)は tests/unit にテストを足して確かめる。'
+  acceptance:
+  - src/content/resume.ts が Resume 型と resume を export し、satisfies Resume で型が検査される
+  - npm run check が通る
+  - profile.links の github / x / email が設計の値と一致し、resumePdf が '/resume.pdf' である
+  - about が1〜4個、profile.summary が120文字以内、experience の start が YYYY-MM 形式であることをユニットテストが確かめ、npm test が通る
+  - 仮の値に TODO(content) が付いている
+  depends_on:
+  - T-003
+  size: S
+  human_check: ''
+  status: todo
+- id: T-009
+  title: Zenn 記事のビルド時取得(zenn.ts)
+  milestone: M2
+  request: 詳細設計「データとコンテンツ > Zenn 記事」に従い、src/lib/schemas.ts に zennResponseSchema を足し、src/lib/zenn.ts に fetchLatestArticles(username = 'riku_takata', count = 5) を作る。取得先は https://zenn.dev/api/articles?username=<username>&order=latest&count=<count>。レスポンスを zennResponseSchema で検証し、使う値は articles[].title、slug、published_at、user.username だけにする。戻り値は { title, url, publishedAt }[] とし、url は https://zenn.dev/${username}/articles/${slug} で組み立てる。タイムアウトは10秒(AbortSignal.timeout)。通信エラー、HTTP エラー、タイムアウト、スキーマ違反のときは例外を投げず、console.warn を1回出して空の配列を返す(ビルドを止めない)。username は lib/site.ts の ZENN_USERNAME を既定値に使う。tests/unit/zenn.test.ts を fetch のモックで書く。
+  acceptance:
+  - 正常なレスポンスのモックで5件を返し、url が https://zenn.dev/riku_takata/articles/<slug> になる
+  - HTTP 500 のとき、空の配列を返し console.warn が1回呼ばれる
+  - タイムアウト(AbortError)のとき、空の配列を返し console.warn が1回呼ばれる
+  - スキーマ違反(articles がない、title が数値など)のとき、空の配列を返し console.warn が1回呼ばれる
+  - fetch に渡す URL に username、order=latest、count=5 が入っている
+  - どのケースでも例外が外に出ない
+  - npm test が通る
+  depends_on:
+  - T-006
+  size: S
+  human_check: ''
+  status: todo
+- id: T-010
+  title: テーマ・フォント・共通 UI 部品とアイコン
+  milestone: M3
+  request: '詳細設計「画面・機能 > 共通のデザイン規律」に従い、見た目の土台を作る。src/styles/global.css に @import "tailwindcss"、@plugin "@tailwindcss/typography"、@theme で --font-sans: "Geist Variable", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif と --font-mono: "JetBrains Mono Variable", ui-monospace, monospace を書く。@fontsource-variable/geist と @fontsource-variable/jetbrains-mono を入れる(和文の Web フォントは配信しない)。body に背景 bg-zinc-50 / dark:bg-zinc-950、本文 text-zinc-800 / dark:text-zinc-200 を当てる。ダークモードは prefers-color-scheme に従うだけ。部品: components/common/Container.astro(mx-auto max-w-2xl px-4 sm:px-6)、components/common/Section.astro(id と h2 のラベルを受け取り、h2 は text-lg font-semibold)、components/ui/Badge.astro(font-mono text-xs、境界線は zinc)、components/ui/LinkButton.astro(リンクとフォーカスに indigo、transition-colors duration-150、外部リンクのときは target="_blank" rel="noopener noreferrer")。components/icons/ に Github、X(Simple Icons、CC0)、Mail、FileText、ArrowRight、ExternalLink(Lucide、ISC)の SVG を直接書き、aria-hidden="true" を付け、ライセンスの出典をコメントに書く。zinc と indigo 以外の色、グラデーション、animate-*、transform、backdrop-blur、rounded-full は使わない。'
+  acceptance:
+  - npm run verify が通る(source-rules.test.ts を含む)
+  - global.css の @theme に --font-sans と --font-mono が設計どおりに定義されている
+  - package.json に和文の Web フォントのパッケージがない
+  - アイコン6個がそれぞれ .astro で、svg に aria-hidden="true" があり、出典とライセンスのコメントがある
+  - LinkButton に外部 URL を渡すと target="_blank" と rel="noopener noreferrer" が付く
+  - React と lucide 系のパッケージが package.json にない
+  depends_on:
+  - T-004
+  size: M
+  human_check: 部品を仮に index.astro に並べたスクリーンショット(ライト・ダーク)を付け、色と文字が「引き算のミニマル」になっているかを見る。
+  status: todo
+- id: T-011
+  title: BaseLayout の完成(メタ情報、フォントの preload、Vercel Analytics)
+  milestone: M3
+  request: '詳細設計「F-01 BaseLayout」に従い、src/layouts/BaseLayout.astro を完成させる。props: title、description、ogImage(''/og/<id>.png'' の形の相対パス)、type(''website''|''article'')。出力: <html lang="ja">、<title>、meta description、link rel="canonical"(Astro.site を元にした絶対 URL、末尾 /)、og:title / og:description / og:image(絶対 URL)/ og:url / og:type / og:locale=ja_JP、twitter:card=summary_large_image、favicon、<meta name="color-scheme" content="light dark">、Geist の woff2(latin)の <link rel="preload" as="font" type="font/woff2" crossorigin>(JetBrains Mono は preload しない)、@vercel/analytics の Astro 用コンポーネント(T-001 で確かめた形)。index.astro はトップの title「高田 莉玖 (Riku Takata) | Portfolio」、description は resume.profile.summary、ogImage は /og/index.png で使う(PNG そのものは T-019 で作る)。これがサイトで唯一のクライアント JS になる。tests/dist に「検証の方針 > ビルド結果のテスト」の「全 HTML のメタ情報」(og:image の PNG の存在は除く)と「JS」の項目を足す: 全 HTML で lang="ja"、h1 がちょうど1つ(トップにまだ h1 がなければ、このタスクで Hero の仮の h1 を置くか、T-012 で満たすテストとして skip せずに書けるよう順序を調整する)、title が空でなく全ページで重ならない、description が空でない、canonical が SITE_URL で始まり末尾が /、og:image が絶対 URL、twitter:card がある、<script> は Vercel Analytics のもの(src が /_vercel/insights/ で始まるもの、またはそのコンポーネントが出す inline の初期化コード)だけで、dist/_astro/*.js がない。'
+  acceptance:
+  - dist/index.html の <title> が「高田 莉玖 (Riku Takata) | Portfolio」である
+  - dist/index.html に canonical(SITE_URL + '/')、og:title、og:description、og:image(SITE_URL + '/og/index.png')、og:url、og:type=website、og:locale=ja_JP、twitter:card=summary_large_image、color-scheme がある
+  - Geist の woff2 への preload が1つあり、crossorigin が付いている
+  - <script> が Vercel Analytics のものだけで、dist/_astro/ の .js は Vercel Analytics のもの(中身に /_vercel/insights を含む)だけである
+  - inline の別の <script> を足すと npm run test:dist が失敗する
+  - npm run verify が通る
+  depends_on:
+  - T-008
+  - T-010
+  size: M
+  human_check: ''
+  status: todo
+- id: T-012
+  title: Hero と About セクション
+  milestone: M3
+  request: '詳細設計「F-02 Hero」「F-03 About」に従い、components/sections/Hero.astro(#top)と About.astro(#about)を作り、index.astro に置く。データは pages/index.astro が src/content/resume.ts を import し、props で渡す(sections は content/ を直接 import しない。「モジュールの境界」)。Hero: h1 に nameJa(text-3xl font-semibold tracking-tight)、その横か下に nameEn を補足の文字(text-sm text-zinc-500 / dark:text-zinc-400)で出す。affiliation を1行、focus を「·」でつないで1行出す。リンクを横に並べる: GitHub / X / Mail(mailto:)/ Resume (PDF)(/resume.pdf)。アイコン + テキストで、アイコンは aria-hidden。外部リンクには target="_blank" rel="noopener noreferrer"。写真と画像は置かない。About: h2「About」、resume.about を段落(text-base leading-7)で出す。tests/dist に、トップに #about があること、Hero の4つのリンクの href、target="_blank" のリンクの rel に noopener が入っていること(全ページ対象)を足す。'
+  acceptance:
+  - dist/index.html に h1 が1つあり、中身が「高田 莉玖」である
+  - Hero に https://github.com/Riku-Takata、https://x.com/tk1_chestnut、mailto:RikuChestnut66@gmail.com、/resume.pdf へのリンクがある
+  - GitHub と X のリンクに target="_blank" と rel="noopener noreferrer" がある
+  - Hero に <img> がない
+  - id="about" の要素があり、h2「About」と resume.about と同じ数の段落がある
+  - src/components/sections/ のファイルが src/content/ を import していない
+  - npm run verify が通る
+  depends_on:
+  - T-011
+  size: S
+  human_check: 375px とデスクトップ幅、ライトとダークで Hero と About のスクリーンショットを付け、文字の階層と余白を見る。
+  status: todo
+- id: T-013
+  title: Featured Projects セクションと ProjectCard
+  milestone: M3
+  request: '詳細設計「F-04 Featured Projects」に従い、components/sections/ProjectsList.astro(#projects)と components/ui/ProjectCard.astro を作り、index.astro に置く。pages/index.astro が getCollection(''projects'') の結果を selectFeatured() に通して props で渡す。h2「Featured Projects」。カードは <article> にし、border と rounded-lg で囲む(影なし)。中身の順: 1) h3 にプロジェクト名(text-base font-semibold)、補足に formatPeriod の期間、2) summary、3) tech を Badge で並べる、4) outcomes の箇条書き、5) リンク: [Live Demo](links.demo があるとき)、[GitHub Code](links.github があるとき)、[技術解説を読む →](/projects/<slug>/)。カード全体を1つのリンクにはしない。外部リンクは target="_blank" rel="noopener noreferrer"。tests/dist に、#projects があること、featured の件数分の <article> があること、各カードに /projects/<slug>/ へのリンクがあること、<a> の中に <a> がないことを足す。'
+  acceptance:
+  - dist/index.html に id="projects" と h2「Featured Projects」がある
+  - featured の件数(仮原稿では2件)と同じ数の <article> が order の順に並ぶ
+  - 各カードに h3、期間、summary、tech のバッジ、outcomes の li、/projects/<slug>/ へのリンクがある
+  - links.demo がないプロジェクトには Live Demo のリンクが出ない
+  - <a> の入れ子がない
+  - npm run verify が通る
+  depends_on:
+  - T-005
+  - T-007
+  - T-011
+  size: M
+  human_check: カードのスクリーンショット(375px とデスクトップ、ライトとダーク)を付け、影やグラデーションがなく境界線だけで区切れているかを見る。
+  status: todo
+- id: T-014
+  title: Technical Skills と Experience & Education セクション
+  milestone: M3
+  request: '詳細設計「F-05 Technical Skills」「F-06 Experience & Education」に従う。(1) src/lib/format.ts に純粋な関数を2つ足す: formatExperiencePeriod({ start, end? }) は end があれば `${formatYearMonth(start)} – ${formatYearMonth(end)}`(半角スペース・en dash・半角スペース。end が ''present'' なら ''Present'')、end がなければ formatYearMonth(start) だけを返す。experienceKindLabel(kind) は education→Education、internship→Internship、presentation→Presentation、work→Work を返す。tests/unit/format.test.ts にこの2つのテストを足す。(2) src/components/sections/Skills.astro(props: skills: Resume[''skills''])を作る。既存の Section(id="skills"、label="Technical Skills")で包み、<dl> の中に、カテゴリごとに <dt>(category)と<dd>(items を書いた順に既存の Badge で並べる)を置く。星、%、<progress>、<meter>、バーなどの評価の表示は一切しない。(3) src/components/sections/Experience.astro(props: experience: Resume[''experience''])を作る。Section(id="experience"、label="Experience & Education")で包み、sortExperience で並べた <ol> にする。各 <li> に、<time datetime="<start の YYYY-MM>"> の中に formatExperiencePeriod の文字、experienceKindLabel の文字、title、org、note(あれば)を出す。装飾は <ol> の左の縦線(border-l と境界線の色)だけ。(4) src/pages/index.astro の <main> で、ProjectsList の後に Skills、その後に Experience を置き、resume.skills と resume.experience を props で渡す。(5) tests/dist に sections.test.ts を足し、下の受け入れ基準の 1〜3 と 5 を確かめる(期待値は src/content/resume.ts の resume から作り、件数を決め打ちしない)。比べる基準のブランチは renewal(main ではない)。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/index.html に id="skills" と id="experience" があり、id="projects" → skills → experience の順に並ぶ
+  - '#skills の <dl> の <dt> の数が resume.skills の数と一致し、各 <dd> のバッジの文字が items と同じ順に並ぶ'
+  - '#skills に <progress>、<meter>、% の文字、★ や ☆ がない'
+  - '#experience の <ol> の <li> が start の降順で、各 <li> の <time> の datetime が YYYY-MM の形'
+  - formatExperiencePeriod と experienceKindLabel が request の (1) のとおりの文字を返す(tests/unit で確かめる)
+  - npm run verify が通る
+  depends_on:
+  - T-005
+  - T-008
+  - T-011
+  size: M
+  human_check: タイムラインのスクリーンショット(375px とデスクトップ、ライトとダーク)を付け、縦線と文字の階層を見る。
+  status: todo
+- id: T-015
+  title: Articles セクションと Footer
+  milestone: M3
+  request: '詳細設計「F-07 Articles」と「F-08 Footer / Header」の Footer に従う。(1) src/lib/zenn.ts の fetchLatestArticles に、環境変数 ZENN_OFFLINE が ''1'' のときは fetch を呼ばずに [] を返す(warn も出さない)分岐を足し、tests/unit/zenn.test.ts にそのテストを足す(fetch のモックが呼ばれないこと)。(2) src/components/sections/Articles.astro(props: articles: ZennArticle[])を作る。既存の Section(id="articles"、label="Articles")で包む。articles が1件以上なら <ol> にし、各 <li> に <time datetime="<publishedAt>">(表示は formatDate による YYYY.MM.DD)と、タイトルの外部リンク(target="_blank" rel="noopener noreferrer")を置く。サムネイル、<img>、いいね数は出さない。0件なら <ol> を出さない。どちらのときも末尾に「Zenn の記事一覧 →」(href="https://zenn.dev/riku_takata"、外部リンク)を置く。(3) src/pages/index.astro がビルド時に fetchLatestArticles() を呼び、<main> の最後(Experience の後)に Articles を置く。(4) src/components/common/Footer.astro を作る。中身は <footer> に「© <new Date().getFullYear()> Riku Takata」だけ。/privacy-policy や /terms-of-service へのリンクは置かない。BaseLayout の <body> の中、<slot /> の後に置き、全ページに出す。(5) tests/dist に articles.test.ts と footer.test.ts を足し、下の受け入れ基準の 1〜4 を確かめる(記事があるときとないときの両方で通る書き方にする。ビルドの時にネットワークがあるかどうかで記事の有無が変わるため)。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/index.html に id="articles" があり、その h2 が「Articles」で、id="experience" より後にある
+  - '#articles に href="https://zenn.dev/riku_takata" で文字が「Zenn の記事一覧 →」のリンクがある'
+  - '#articles の記事のリンクは5件以下で、各記事に YYYY.MM.DD の文字と datetime 付きの <time> があり、#articles に <img> がない'
+  - ZENN_OFFLINE=1 で npm run build すると、#articles に <ol> がなく「Zenn の記事一覧 →」のリンクだけがある
+  - dist の全 HTML に「© <今年> Riku Takata」を含む <footer> があり、/privacy-policy と /terms-of-service へのリンクがない
+  - npm run verify が通る
+  depends_on:
+  - T-005
+  - T-009
+  - T-011
+  size: S
+  human_check: 記事がある場合とない場合(ZENN_OFFLINE=1)のスクリーンショットを付ける。
+  status: todo
+- id: T-024
+  title: 404 ページ
+  milestone: M3
+  request: 詳細設計「F-15 404 ページ」に従い、src/pages/404.astro を作る。BaseLayout を使い、h1「ページが見つかりません」とトップへのリンクだけを置く。tests/dist に dist/404.html のテストを足す。
+  acceptance:
+  - dist/404.html があり、h1 がちょうど1つで、/ へのリンクがある
+  - 404.html も全 HTML のメタ情報のテストを満たす
+  - npm run verify が通る
+  depends_on:
+  - T-011
+  size: S
+  human_check: ''
+  status: todo
+- id: T-016
+  title: プロジェクト詳細ページの骨組み(Header、ProjectLayout、見出しのブロック)
+  milestone: M4
+  request: '詳細設計「F-09 プロジェクト詳細ページ」と「F-08」の Header に従う。本文の組版(prose、表、Shiki)は T-026 で行うので、このタスクでは本文を飾らずに出す。(1) src/pages/projects/[slug].astro: getStaticPaths で getCollection(''projects'') の全件(featured の値によらない)を返す。params.slug には entry.id を使う(原稿のファイル名は小文字とハイフンだけという規則が tests/unit/content.test.ts にあり、id はファイル名から拡張子を除いたものと同じになる)。render(entry) の Content を ProjectLayout の中に出す。(2) src/layouts/ProjectLayout.astro(props: project = コレクションの entry): BaseLayout を title=「<data.title> | <SITE_NAME>」(SITE_NAME は src/lib/site.ts)、description=data.summary、ogImage=`/og/<entry.id>.png`、type=''article'' で使う。中身は、Header、<main> の中に見出しのブロック(h1 にタイトル、formatPeriod による期間、summary、tech を既存の Badge で、links.demo があれば「Live Demo」、links.github があれば「GitHub Code」を既存の LinkButton で)、本文、末尾に href="/#projects" の「← Featured Projects へ戻る」リンク。h1 はページに1つだけにする。(3) src/components/common/Header.astro: <header id="site-header"> の中に href="/" の「Riku Takata」リンクだけ。ProjectLayout だけで使い、トップと 404 には出さない。(4) tests/dist に detail.test.ts を足し、下の受け入れ基準の 1〜4 を確かめる(slug の一覧は src/content/projects/ の .mdx のファイル名から作り、件数を決め打ちしない)。既存の tests/dist/meta.test.ts は詳細ページにもそのまま当たる(変えない)。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - src/content/projects/ の各 .mdx について、拡張子を除いたファイル名を slug として dist/projects/<slug>/index.html がある
+  - 詳細ページの <title> が「<frontmatter の title> | Riku Takata」、og:type が article、canonical が SITE_URL/projects/<slug>/、og:image が SITE_URL/og/<slug>.png
+  - 詳細ページの h1 がちょうど1つで、文字が frontmatter の title と同じ
+  - 詳細ページに id="site-header" の中の href="/" のリンクと、href="/#projects" の「← Featured Projects へ戻る」リンクがあり、dist/index.html と dist/404.html には id="site-header" がない
+  - '詳細ページに、原稿の本文の h2(例: satellite-insar の「1. 概要 & 解決したい課題 (Why)」)が出ている'
+  - npm run verify が通る
+  depends_on:
+  - T-007
+  - T-013
+  size: M
+  human_check: 詳細ページを 375px とデスクトップで撮り、見出しのブロック(期間、技術バッジ、リンク)の並びを見る。
+  status: todo
+- id: T-026
+  title: 詳細ページの本文の組版(prose、表の横スクロール、Shiki の2テーマ)
+  milestone: M4
+  request: '詳細設計「F-09 プロジェクト詳細ページ」の本文の節に従う。(1) ProjectLayout の本文を <div class="prose prose-zinc dark:prose-invert max-w-none"> で包む(typography は global.css の@plugin で入っている)。(2) src/components/mdx/Table.astro を作る: <div class="overflow-x-auto"><table><slot /></table></div>。src/pages/projects/[slug].astro で <Content components={{ table: Table }} /> として、Markdown の表をこれで出す(ページ全体は横にスクロールさせず、表だけを横スクロールにする)。(3) astro.config.mjs の markdown.shikiConfig を themes: { light: ''github-light'', dark: ''github-dark'' } にする(このタスクに限って astro.config.mjs の変更を許してある)。(4) src/styles/global.css に、@media (prefers-color-scheme: dark) の中で .astro-code と .astro-code span のcolor と background-color を var(--shiki-dark) と var(--shiki-dark-bg) に切り替える規則を書く(JS は使わない)。(5) tests/dist に detail-body.test.ts を足し、下の受け入れ基準の 1〜4 を確かめる。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 詳細ページの本文(原稿の h2)が、class に prose を含む要素の中にある
+  - 詳細ページの <table> はどれも、class に overflow-x-auto を含む <div> の直下にある
+  - 詳細ページのコードブロックの <pre>(class に astro-code)の style に --shiki-dark が入っている
+  - 'dist/_astro/ の CSS に、prefers-color-scheme: dark の中で var(--shiki-dark) を使う規則がある'
+  - npm run verify が通る(<script> が増えていないことを含む)
+  depends_on:
+  - T-016
+  size: S
+  human_check: 詳細ページを 375px とデスクトップ、ライトとダークで撮り、prose の組版、コードの色の切り替え、表の横スクロールでページ全体がはみ出さないことを見る。
+  status: todo
+- id: T-017
+  title: Mermaid 図の書き出しスクリプトと鮮度のテスト
+  milestone: M4
+  request: '詳細設計「データとコンテンツ > 図」と「F-14 図の書き出し」に従う。@mermaid-js/mermaid-cli を devDependency に入れる(build スクリプトには含めない。Vercel のビルドで Chromium を動かさない)。mermaid.config.json を置く(theme:''neutral''、flowchart.htmlLabels:false、fontFamily はシステムの sans)。scripts/build-diagrams.mjs: src/assets/diagrams/*.mmd をすべて mermaid-cli で同じ名前の .svg に書き出し、先頭に <!-- source-sha256: <.mmd の SHA-256> --> を入れる。npm scripts に diagrams を足す。ハッシュの計算と比較は、テストと T-019 の公開前チェックで使えるよう純粋な関数として切り出す(例: scripts か src/lib の下)。仮の図として satellite-insar-architecture.mmd と rag-knowledge-base-architecture.mmd を置き(日本語のラベルを含める、TODO(content) をコメントで入れる)、書き出した .svg と両方をコミットする。tests/unit/diagrams.test.ts: すべての .mmd に同じ名前の .svg がある、SVG の source-sha256 が今の .mmd と合う。'
+  acceptance:
+  - 'npm run diagrams で .mmd ごとに .svg ができ、先頭に <!-- source-sha256: … --> がある'
+  - package.json の build スクリプトに diagrams や mmdc が含まれない
+  - .mmd を1文字変えて .svg を書き出し直さないと npm test が失敗する
+  - .svg のない .mmd を置くと npm test が失敗する
+  - 2件の .mmd と .svg がコミットされている
+  - npm run verify が通る
+  depends_on:
+  - T-003
+  size: M
+  human_check: 書き出した SVG を明るい背景で開いたスクリーンショットを付け、日本語のラベルが詰まったり崩れたりしていないかを見る(htmlLabels:false の影響)。
+  status: todo
+- id: T-018
+  title: Figure コンポーネントと仮原稿への図の配置
+  milestone: M4
+  request: '詳細設計「F-10 Figure」と「本文の書き方」に従い、src/components/mdx/Figure.astro を作る。props: src(SVG の import の結果。src・width・height を持つ)、alt: string(? を付けず必須にする)、caption?: string。alt が空白だけならビルドを失敗させる(throw)。<figure> の中に <img src={src.src} width={src.width} height={src.height} alt={alt}>(astro:assets の <Image> は SVG を最適化しないので使わない)と、caption があれば <figcaption class="text-sm text-zinc-500"> を出す。図はダークモードでも読めるよう、明るい板の上に置く: <img> を包む要素に rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-100(zinc の中で決める。bg-white は使わない)。仮原稿2件の「## 2. システムアーキテクチャ」に、import arch from ''../../assets/diagrams/<slug>-architecture.svg'' と <Figure src={arch} alt="…" caption="…" /> を入れる(alt は構成を文で説明する)。tests/dist に figure.test.ts を足し、下の受け入れ基準の 1〜2 を確かめる。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 詳細ページ2件の本文に、<figure> の中の <img> と <figcaption> がある
+  - dist の全 HTML のすべての <img> に、空でない alt と、数値の width と height がある
+  - npm run verify が通る
+  depends_on:
+  - T-026
+  - T-017
+  size: S
+  human_check: ダークモードで、図が明るい板の上で読めるかをスクリーンショットで見る。
+  status: todo
+- id: T-019
+  title: OGP 画像のビルド時生成
+  milestone: M5
+  request: '詳細設計「F-11 OGP 画像」と「データとコンテンツ > OGP 用のフォント」に従う。satori と @resvg/resvg-js を入れる。フォントは設計の見直しで用意済み: src/assets/fonts/NotoSansJP-Regular.otf、NotoSansJP-Bold.otf(Noto CJK の日本語のサブセット版 OTF。satori は OTF を読める)と OFL.txt。ビルド時に fs で読むだけで、配信はしない(dist/ に出さない)。src/lib/og.ts に renderOgPng({ title, summary }): Promise<Buffer> を作る。satori には JSX を使わず要素のオブジェクトを渡す(React を入れない)。レイアウト: 1200×630、背景 zinc-50、左上の余白 80px、タイトルは Bold 64px・zinc-900・2行を超えたら省略、概要は Regular 32px・zinc-500・最大3行、左下に「Riku Takata」、下端に indigo-600 の 8px の帯。src/pages/og/[slug].png.ts は getStaticPaths で ''index''(タイトルは resume.profile.nameEn、概要は resume.profile.summary)と各プロジェクトの entry.id(title と summary)を返し、ビルド時に PNG を出力する。tests/dist に og.test.ts を足し、下の受け入れ基準の 1〜3 を確かめる(PNG の IHDR は先頭 24 バイトから読む)。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - npm run build の後に dist/og/index.png と、各 slug の dist/og/<slug>.png がある
+  - それぞれの PNG の IHDR の幅が 1200、高さが 630
+  - dist の全 HTML の og:image の URL から SITE_URL を除いたパスのファイルが dist/ にある
+  - dist/ に .otf のファイルがなく、package.json の dependencies と devDependencies に react と @vercel/og がない
+  - npm run verify が通る
+  depends_on:
+  - T-008
+  - T-016
+  size: M
+  human_check: 生成した PNG(index と2件)を PR に貼り、文字の折り返し、2行・3行での省略、余白、帯の色を見る。長いタイトルの例も1枚作って見る。
+  status: todo
+- id: T-020
+  title: sitemap と robots.txt
+  milestone: M5
+  request: '詳細設計「F-12 SEO の付属物」に従う。@astrojs/sitemap を入れ、sitemap-index.xml を出す。/og/ の PNG は sitemap に入れない(filter で除く)。src/pages/robots.txt.ts で「User-agent: *」「Allow: /」「Sitemap: <SITE_URL>/sitemap-index.xml」を返す。SITE_URL は1か所(src/lib/site.ts)にだけ書く: astro.config.mjs は import { SITE_URL } from ''./src/lib/site.ts'' で読み、site: SITE_URL とする(URL の文字列を astro.config.mjs に直接書かない。このタスクに限って astro.config.mjs の変更を許してある)。tests/dist に seo.test.ts を足し、下の受け入れ基準の 1〜3 を確かめる。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/sitemap-index.xml があり、参照先の sitemap に SITE_URL/ と各 SITE_URL/projects/<slug>/ がある
+  - sitemap に /og/ を含む URL がない
+  - 'dist/robots.txt に User-agent: *、Allow: /、Sitemap: <SITE_URL>/sitemap-index.xml の行がある'
+  - astro.config.mjs に https:// で始まる URL の文字列がなく、src/lib/site.ts から SITE_URL を import している
+  - npm run verify が通る
+  depends_on:
+  - T-016
+  - T-019
+  size: S
+  human_check: ''
+  status: todo
+- id: T-025
+  title: 構造化データ(JSON-LD)
+  milestone: M5
+  request: '詳細設計「F-16 構造化データ」に従い、トップに Person、詳細ページに CreativeWork の JSON-LD を <script type="application/ld+json"> で出す。値は resume.ts と frontmatter から作る(Person: name=nameEn、alternateName=nameJa、url=SITE_URL/、sameAs=[links.github, links.x]、affiliation。CreativeWork: name=title、description=summary、author は Person の name、dateCreated=period.start)。tests/dist/html.ts の scripts() の結果から type="application/ld+json" を除いて数えるよう、tests/dist/meta.test.ts の「<script> は Vercel Analytics のものがちょうど1つだけ」を変える(このタスクで変えてよい既存のテストはこれだけ)。tests/dist に jsonld.test.ts を足し、下の受け入れ基準の 1〜2 を確かめる。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/index.html に Person の JSON-LD があり、sameAs に GitHub と https://x.com/tk1_chestnut がある
+  - 各詳細ページに CreativeWork の JSON-LD があり、name が frontmatter のタイトルと一致する
+  - JSON-LD 以外の <script> が増えていない(Zero-JS の検査が通る)
+  - npm run verify が通る
+  depends_on:
+  - T-008
+  - T-016
+  size: S
+  human_check: ''
+  status: todo
+- id: T-021
+  title: 定期再ビルドのワークフロー(rebuild.yml)
+  milestone: M6
+  request: '詳細設計「F-13 定期再ビルド」に従い、.github/workflows/rebuild.yml を作る。on: schedule の cron ''0 18 * * *''(毎日 03:00 JST)と workflow_dispatch。ステップは secret VERCEL_DEPLOY_HOOK_URL を環境変数で受け、空ならエラーのメッセージ(::error:: で secret を登録するよう案内)を出して失敗し、あれば curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL" を呼ぶだけ。permissions は最小(contents: read)にする。T-001 で確かめた schedule の停止条件を、ワークフローのコメントに書く。開発者の手作業(Vercel で main ブランチ向けの Deploy Hook を作る、GitHub の secret に登録する)は PR の説明に書く(README には T-022 で書く)。'
+  acceptance:
+  - .github/workflows/rebuild.yml に cron '0 18 * * *' と workflow_dispatch がある
+  - secret が空のとき、ステップがエラーのメッセージを出して非0で終わる(ローカルで同じシェルを空の変数で流して確かめる)
+  - secret の URL をログに出さない
+  - 'permissions が contents: read だけである'
+  - actionlint などで YAML の検査が通る(使えなければ GitHub 上で workflow_dispatch を手で流す)
+  depends_on:
+  - T-003
+  size: S
+  human_check: Deploy Hook と secret を登録したあと、開発者が workflow_dispatch で一度流し、Vercel でデプロイが始まることを確かめる。
+  status: todo
+- id: T-022
+  title: 公開前チェック(check:release)
+  milestone: M6
+  request: '詳細設計「検証の方針 > 公開前のチェック」に従い、scripts/check-release.mjs と npm script check:release を作る。失敗にするもの: public/resume.pdf がない、または0バイト。src/ と astro.config.mjs に TODO(content) が残っている(ファイルと行を一覧で出す)。featured のプロジェクトが2件未満(MDX の frontmatter を読んで数える)。図の鮮度のチェック(T-017 で切り出したハッシュの比較を使い、diagrams.test.ts と同じ判定にする)に落ちる。警告だけ出すもの: MDX に、「概要」「アーキテクチャ」「技術選定」「課題」を含む h2 のどれかがない。結果は項目ごとに OK / FAIL / WARN で出し、FAIL が1つでもあれば非0で終わる。ロジックは関数に分け、tests/unit に一時ディレクトリを使ったテストを足す。今の仮原稿の状態では FAIL になるのが正しい(CI の verify には含めない)。 追加:public/resume.pdf のメタデータ(Author、Creator、Producer、元のファイルのパス)が空であることを確かめ、残っていれば FAIL にする。'
+  acceptance:
+  - 今のリポジトリ(仮原稿、仮の resume、仮の SITE_URL、resume.pdf なし)で npm run check:release が非0で終わり、TODO(content) の残っているファイルと行、resume.pdf がないことを出す
+  - 条件をすべて満たした一時ディレクトリのフィクスチャで、判定の関数が成功を返す
+  - resume.pdf が0バイト、featured が1件、図のハッシュ違いのそれぞれで FAIL になることをユニットテストが確かめる
+  - 4つの h2 のどれかがない MDX は WARN になるが、それだけでは失敗しない
+  - npm run verify が通り、verify と ci.yml に check:release が含まれない
+  - 作成者などのメタデータが残った resume.pdf で FAIL になることをユニットテストが確かめる
+  depends_on:
+  - T-007
+  - T-017
+  size: M
+  human_check: ''
+  status: todo
+- id: T-023
+  title: README の書き換え(構成、scripts、原稿の書き方、公開の手順)
+  milestone: M6
+  request: '詳細設計「既存のコードからの移行 > 残すもの・移すもの」の README.md の行と「進め方」に従い、README.md を新しい構成に書き換える。T-001 で書いた「依存の確認記録」の節は残す。書くこと: サイトの概要(Astro の静的サイト、Zero-JS で例外は Vercel Analytics だけ)、ディレクトリ構成の要約、npm scripts の一覧(check / lint / format:check / test / build / test:dist / diagrams / check:release / verify)、プロジェクト原稿の書き方(docs/project-template.mdx、frontmatter の制約、本文に「# 」を書かない、Figure の使い方、featured は3件以下)、resume.ts の書き方、図の書き出し(.mmd を直して npm run diagrams、.svg もコミット)、OGP 用フォントのライセンス、定期再ビルドの準備(Deploy Hook と secret VERCEL_DEPLOY_HOOK_URL)、公開の手順(renewal で作業、check:release を通す、Vercel の Framework Preset を Astro・Build Command を npm run build・Output Directory を dist に変える、main にマージ)、人間が見ること(「検証の方針 > 人間が見ること」の要約。Lighthouse は Preview か本番の URL で測る)。古い説明(Welcome、GitHub API のチャートなど)は消す。'
+  acceptance:
+  - README.md に npm scripts の9つすべての説明がある
+  - README.md に原稿の書き方、図の書き出し、定期再ビルドの準備、公開の手順の節がある
+  - README.md に「依存の確認記録」の節が残っている
+  - README.md に Welcome、framer-motion、Next.js の起動手順、GitHub API のチャートの説明がない
+  - npm run format:check が通る
+  depends_on:
+  - T-018
+  - T-019
+  - T-020
+  - T-021
+  - T-022
+  - T-024
+  - T-025
+  - T-026
+  size: S
+  human_check: 開発者が README の手順だけで原稿の追加と公開ができそうかを読んで確かめる。
+  status: todo
+- id: T-027
+  title: OGP 画像の長いタイトルと概要が右端からはみ出すのを直す
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、タイトル 54 文字・概要 79 文字の OGP 画像(src/lib/og.ts の renderOgPng)の文字が、画像の右端(左右の余白 80px の内側の 1040px)を超えて切れていた。2行・3行での省略(lineClamp)は効いているが、行の幅が制限されていない。(1) satori に渡す要素の木を作る部分を、純粋な関数 buildOgTree({ title, summary }) として src/lib/og.ts から export し、renderOgPng はそれを使う。(2) タイトルと概要の要素に width: 1040(1200 − 左右の余白 80px × 2)を付け、日本語でも幅の中で折り返すようにする(必要なら wordBreak を指定する)。省略の行数(タイトル 2 行、概要 3 行)、文字の大きさと色、帯、「Riku Takata」の位置は変えない。(3) tests/unit/og.test.ts に、buildOgTree のタイトルと概要の要素の幅が 1040 であることと、上限に近い長さ(タイトル 54 文字以上、概要 79 文字以上)の入力で renderOgPng が 1200×630 の PNG を返すことのテストを足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - src/lib/og.ts が buildOgTree を export し、renderOgPng がそれを使っている
+  - buildOgTree の結果で、タイトルと概要の要素の style.width が 1040 で、タイトルの lineClamp が 2、概要の lineClamp が 3
+  - タイトル 54 文字以上・概要 79 文字以上の入力で renderOgPng が返す PNG の IHDR が 1200×630
+  - npm run verify が通る
+  depends_on:
+  - T-019
+  size: S
+  human_check: 上限に近い長さのタイトルと概要で作った PNG を PR に貼り、文字が右端の余白の内側で折り返し、2行・3行で省略されているかを見る。
+  status: todo
+- id: T-028
+  title: トップページのセクションの間に余白を入れる
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、トップページの About → Featured Projects → Technical Skills → Experience & Education → Articles の間に余白がほとんどなく、前のセクションの最後と次の見出しがくっついて見えた。原因は src/components/common/Section.astro の <section> に縦の余白がないこと(Hero だけが自分で py-16 を持っている)。(1) Section.astro の <section> に縦の余白(py-12 を目安に、Hero の py-16 と釣り合うもの)を付け、Section を使う全セクションに同じ余白が入るようにする。各セクションのコンポーネントで個別に余白を足さない。(2) 見出し(h2)と中身の間の余白が各セクションでそろっているか確かめ、そろっていなければ Section.astro の h2 の側でそろえる。影やグラデーションは使わない(デザイン規律のテストを守る)。(3) tests/dist に、下の受け入れ基準の 1 を確かめるテストを足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/index.html の id が about、projects、skills、experience、articles の <section> の class に、どれも同じ縦の余白のクラス(py- で始まるもの)がある
+  - Section.astro 以外のセクションのコンポーネントに、セクションの間の余白のための py- や my- のクラスを足していない
+  - npm run verify が通る
+  depends_on:
+  - T-012
+  - T-013
+  - T-014
+  - T-015
+  size: S
+  human_check: トップページ全体を 375px とデスクトップ、ライトとダークで撮り、セクションの間の余白と見出しの階層を見る。
+  status: todo
+- id: T-029
+  title: 375px で詳細ページの表の列が1文字ずつ折り返すのを直す
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、375px の詳細ページの表(観点・採用・退けた候補・理由)の1列目が「観/点」「言/語」のように1文字ずつ折り返していた。表は src/components/mdx/Table.astro の overflow-x-auto の中にあるので、狭い画面では表を詰めずに横スクロールさせるほうがよい。(1) Table.astro の <table> に最小の幅(min-w-[36rem] を目安)を付け、375px では表の中だけを横にスクロールさせる。ページ全体は横にスクロールさせない。(2) tests/dist の詳細ページのテストに、下の受け入れ基準の 1 を足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 詳細ページの <table> はどれも、class に overflow-x-auto を含む <div> の直下にあり、<table> の class に min-w- で始まるクラスがある
+  - npm run verify が通る
+  depends_on:
+  - T-026
+  size: S
+  human_check: 詳細ページを 375px で撮り、表が横スクロールになって列が1文字ずつ折り返していないこと、ページ全体ははみ出していないことを見る。
+  status: todo
+- id: T-030
+  title: 狭い画面で図の文字が小さくなりすぎるのを直す
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、375px の詳細ページの構成図(横に長い Mermaid の SVG)が画面の幅に縮められ、文字がほとんど読めなかった。(1) src/components/mdx/Figure.astro で、図の板(枠と背景のある div)の中に overflow-x-auto の入れ物を置き、<img> に最小の幅(min-w-[40rem] を目安)を付けて、狭い画面では図の中だけを横にスクロールさせる。デスクトップの幅では今と同じ見た目にする(図が板からはみ出さない)。板の色(ダークでも明るい板)と figcaption は変えない。(2) tests/dist の図のテストに、下の受け入れ基準の 1 を足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 詳細ページの図の <img> が class に overflow-x-auto を含む要素の中にあり、<img> の class に min-w- で始まるクラスがある
+  - 図の板の class(ライトとダークの背景と枠)は変わっていない
+  - npm run verify が通る
+  depends_on:
+  - T-018
+  size: S
+  human_check: 詳細ページを 375px とデスクトップ、ライトとダークで撮り、図の文字が読める大きさか、デスクトップで図が板からはみ出していないかを見る。
+  status: todo
+- id: T-033
+  title: Vercel のビルドを Astro として動かす(vercel.json の framework)
+  milestone: M7
+  request: 'PR #10(T-002 で Next.js 版を消した)から、Vercel のデプロイ(Preview を含む)が毎回失敗している。手元の npm run build は通るので、Vercel のプロジェクトの Framework Preset が Next.js のままになっているのが原因と考えられる(README の「依存の確認記録」にあるとおり、デプロイ単位では vercel.json の framework で上書きできる)。(1) vercel.json に "framework": "astro"、"buildCommand": "npm run build"、"outputDirectory": "dist" を足す。既存の "trailingSlash": true は残す。(2) README の公開の手順の、Framework Preset をダッシュボードで変える手順(手順 3)を、「vercel.json で指定しているので、ダッシュボードの変更は要らない(変える場合は Astro にそろえる)」という書き方に直す。(3) tests/unit に vercel.json の中身(4 つのキーと値)を確かめるテストを足す。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 'vercel.json が framework: astro、buildCommand: npm run build、outputDirectory: dist、trailingSlash: true を持つ'
+  - README の公開の手順が vercel.json での指定を説明している
+  - npm run verify が通る
+  depends_on: []
+  size: S
+  human_check: この PR の Vercel のチェックが成功し、Preview の URL でトップページが開けるかを見る。失敗する場合は Vercel のビルドログを開発者が確かめる。
+  status: todo
+- id: T-031
+  title: 全ページにヘッダーを出す(名前とセクションへのリンク)
+  milestone: M7
+  request: '最終確認の PR #36 で、開発者から「ヘッダーがないのが見づらい」というコメントがあった。詳細設計「F-08 Footer / Header」の Header を、この PR で書き換えた内容に合わせて直す。(1) src/components/common/Header.astro: <header id="site-header"> の左に「Riku Takata」(/ へのリンク)、右に <nav aria-label="セクション"> で About、Projects、Skills、Experience、Articles の 5 つのリンク(href はそれぞれ /#about、/#projects、/#skills、/#experience、/#articles)を置く。画面の上に固定する(sticky top-0)。背景はページと同じ色(ライトとダーク)、下端に境界線(border-b、zinc-200 / zinc-800)だけを付け、影やぼかしは使わない。375px では nav の行を折り返さず、nav の中だけを横にスクロールさせる(overflow-x-auto、whitespace-nowrap)。JS は使わない。(2) BaseLayout の <body> の先頭に Header を置いて全ページ(トップ、詳細、404)に出し、ProjectLayout から Header を外す(二重に出さない)。(3) 固定したヘッダーでアンカーの見出しが隠れないよう、global.css で html に scroll-padding-top をヘッダーの高さ分付ける。(4) tests/dist に header.test.ts を足し、下の受け入れ基準の 1〜3 を確かめる。既存のテストで「Header は詳細ページだけ」を確かめているものがあれば、新しい設計に合わせて直してよい(直したことを PR に書く)。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist の全 HTML に id="site-header" の <header> がちょうど 1 つあり、その中に href="/" で文字が「Riku Takata」のリンクがある
+  - '#site-header の中の nav に、href が /#about、/#projects、/#skills、/#experience、/#articles のリンクがこの順にある'
+  - '#site-header の class に sticky と border-b があり、shadow や backdrop-blur のクラスがない'
+  - dist の HTML の <script> が増えていない
+  - npm run verify が通る
+  depends_on:
+  - T-016
+  - T-028
+  size: S
+  human_check: トップページと詳細ページを 375px とデスクトップ、ライトとダークで撮り、ヘッダーの並び、375px での nav の横スクロール、リンクで飛んだ先の見出しがヘッダーに隠れないかを見る。
+  status: todo
+- id: T-032
+  title: Hero と About の間の余白を、ほかのセクションの間とそろえる
+  milestone: M7
+  request: '最終確認の PR #36 で、Hero と About の間の余白が、ほかのセクションの間より広いと指摘があった。原因は、Hero(src/components/sections/Hero.astro の <section id="top">)の py-16 の下側と、About の Section の py-12 の上側が重なること(ほかのセクションの間は py-12 + py-12)。(1) Hero の下側の余白を Section と同じ 12 にする(例: py-16 を pt-16 pb-12 にする)。上側の余白は変えない。(2) tests/dist に、#top の class に pb-12 があり、Section の <section> の class に py-12 があることを確かめるテストを足す(Section の余白を変えたときに一緒に直せるよう、同じ値であることを確かめる書き方にする)。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 'dist/index.html の #top の下側の余白のクラスが、about などの Section の <section> の縦の余白と同じ値になっている'
+  - '#top の上側の余白(pt-16 または py-16 の上側)は変わっていない'
+  - npm run verify が通る
+  depends_on:
+  - T-028
+  size: S
+  human_check: トップページをデスクトップと 375px で撮り、Hero→About の間と About→Featured Projects の間の余白が同じに見えるかを見る。
+  status: todo
+- id: T-034
+  title: Hero に机のイラスト(湯気とタイピングの動き)を置く
+  milestone: M7
+  request: '詳細設計「F-02 Hero」の机のイラストと、「動き」の例外に従う(この PR で設計を書き換えた)。旧版の SVG は main ブランチの app/components/DeskAnimation.tsx と styles/DeskAnimation.module.css にある(git show origin/main:<パス> で読める)。(1) src/components/sections/DeskIllustration.astro を作る。旧版の構図(机、ノート PC、コップと湯気、本)を引き継いだインラインの SVG にし、色は zinc と indigo だけに塗り直す(線は zinc、PC の画面のコードは indigo など)。ライトとダークで色を切り替える(SVG の fill / stroke に CSS 変数か currentColor を使い、prefers-color-scheme で変える)。<svg> に aria-hidden="true" を付ける。(2) 動きは2つだけ、コンポーネントの <style> の @keyframes で書く: コップの湯気(旧版と同じ stroke-dasharray の動き)と、PC の画面のコードを行ごとに見せていくタイピング(旧版の「const greet = () => {…}」の数行を、steps() で左から見せていき、最後まで見せたら少し止まって繰り返す)。foreignObject と JS は使わない(コードは SVG の <text> で書く)。@media (prefers-reduced-motion: reduce) では animation を止め、コードを全部見せた状態にする。(3) Hero.astro に置く: デスクトップ(sm 以上)では名前とリンクの右、375px では名前の上に小さく(幅 160px 程度)置く。Hero の余白と、ほかの要素の並びは変えない。(4) tests/unit/source-rules.test.ts の「色と動きの規律」の判定で、DeskIllustration.astro の中の @keyframes と animation だけを例外にする(ほかのファイルでは今までどおり違反にする)。色の規律(zinc と indigo 以外の色名、グラデーション)は DeskIllustration.astro にもそのまま当てる。(5) tests/dist に desk.test.ts を足し、下の受け入れ基準の 1〜4 を確かめる。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - 'dist/index.html の #top の中に aria-hidden="true" の <svg> がちょうど1つあり、その中に <foreignObject> がない'
+  - 'dist の CSS に @keyframes があり、prefers-reduced-motion: reduce の中で animation を止める規則(animation: none など)がある'
+  - dist の HTML の <script> が増えていない(Vercel Analytics だけ)
+  - src/ の DeskIllustration.astro 以外のファイルに @keyframes や animate- がなく、DeskIllustration.astro にも zinc と indigo 以外の色名やグラデーションがない
+  - npm run verify が通る
+  depends_on:
+  - T-032
+  size: M
+  human_check: トップページを 375px とデスクトップ、ライトとダークで撮り、机の絵の大きさと置き場所、色がサイトになじんでいるかを見る。湯気とタイピングが動くこと、OS で「視差効果を減らす」を選ぶと止まることを目で確かめる。
+  status: todo
+- id: T-035
+  title: 机のイラストの PC の画面で、コードが枠をはみ出すのを直す
+  milestone: M7
+  request: '最終確認の PR #36 のスクリーンショットで、src/components/sections/DeskIllustration.astro の PC の画面のコード(<text class="desk-code ...">)が画面の右の枠を越え、隣の本に重なっていた。画面の rect は x=18、width=18、stroke-width=2 なので、内側は x=19〜35(幅 16)。今は font-size 2 の等幅で「const greet = () => {」(21 文字)を書いていて、幅がおよそ 21 × 0.6 × 2 ≒ 25 になり、はみ出している。(1) コードの各行が画面の内側に収まるようにする: font-size を小さくする(1.2 前後)か、行の文字を短くするか、その両方で、どの行も「x + 文字数 × 0.6 × font-size」が 35 以下になるようにする。旧版と同じく、関数を定義して console.log を呼ぶ数行のコードという見え方は残す。行の高さが画面の内側(y=18〜27)に収まることも確かめる。(2) 念のため、コードの <text> をまとめて、画面の内側の rect(x=19、y=18、width=16、height=9)を使った <clipPath> で切る。clipPath の id はページ内で重ならない名前にする。(3) タイピングの動き(clip-path の inset の @keyframes)、動きを減らす設定での静止、色は変えない。(4) tests/dist/desk.test.ts に、下の受け入れ基準の 1 と 2 を確かめるテストを足す(ビルド結果の HTML から desk-code の <text> の x、font-size、文字を読んで計算する)。共通の約束: vitest で .astro を描画しない(vitest.config.ts は Astro のプラグインを持たないので、Container API や .astro の import は unit で動かない)。表示の確かめは tests/dist でビルド結果の HTML を読んで行い、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  acceptance:
+  - dist/index.html の机のイラストの class に desk-code を含む <text> のどれも、x + 文字数 × 0.6 × font-size が 35 以下で、y が 18〜27 の範囲にある
+  - desk-code の <text> が、画面の内側の rect を使った <clipPath> を参照する要素の中にある
+  - 'タイピングの @keyframes と、prefers-reduced-motion: reduce で止める規則が残っている'
+  - npm run verify が通る
+  depends_on:
+  - T-034
+  size: S
+  human_check: トップページを 375px とデスクトップ、ライトとダークで撮り、動きを減らす設定(コードを全部見せた静止画)でも、コードが PC の画面の枠の内側に収まっているかを見る。
+  status: todo

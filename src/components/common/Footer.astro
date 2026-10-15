@@ -1,0 +1,9 @@
+---
+import Container from './Container.astro';
+import { jstYear } from '../../lib/format';
+import { SITE_NAME } from '../../lib/site';
+---
+
+<footer class="border-t border-zinc-200 py-8 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+  <Container>{`© ${jstYear()} ${SITE_NAME}`}</Container>
+</footer>

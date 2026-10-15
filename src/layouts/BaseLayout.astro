@@ -1,0 +1,50 @@
+---
+import '../styles/global.css';
+import Analytics from '@vercel/analytics/astro';
+import Footer from '../components/common/Footer.astro';
+import Header from '../components/common/Header.astro';
+import { geistLatin } from '../lib/font-urls.mjs';
+import { serializeJsonLd } from '../lib/jsonld';
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage: `/og/${string}.png`;
+  type: 'website' | 'article';
+  jsonLd?: object;
+}
+
+const { title, description, ogImage, type, jsonLd } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImageUrl = new URL(ogImage, Astro.site).href;
+---
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preload" as="font" type="font/woff2" href={geistLatin} crossorigin />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content={type} />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="/fonts/geist.css" />
+    {jsonLd && (
+      <script type="application/ld+json" is:inline set:html={serializeJsonLd(jsonLd)} />
+    )}
+    <Analytics />
+  </head>
+  <body class="bg-zinc-50 text-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
+    <Header />
+    <slot />
+    <Footer />
+  </body>
+</html>

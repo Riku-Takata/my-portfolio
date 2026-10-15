@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { buildPersonJsonLd } from '../lib/jsonld';
+import Hero from '../components/sections/Hero.astro';
+import About from '../components/sections/About.astro';
+import ProjectsList from '../components/sections/ProjectsList.astro';
+import Skills from '../components/sections/Skills.astro';
+import Experience from '../components/sections/Experience.astro';
+import Articles from '../components/sections/Articles.astro';
+import { fetchLatestArticles } from '../lib/zenn';
+import { getCollection } from 'astro:content';
+import { selectFeatured } from '../lib/projects';
+import { resume } from '../content/resume';
+
+const { nameJa, nameEn } = resume.profile;
+const featured = selectFeatured(await getCollection('projects'));
+const articles = await fetchLatestArticles();
+---
+<BaseLayout
+  title={`${nameJa} (${nameEn}) | Portfolio`}
+  description={resume.profile.summary}
+  ogImage="/og/index.png"
+  type="website"
+  jsonLd={buildPersonJsonLd()}
+>
+  <main class="pb-16">
+    <Hero profile={resume.profile} />
+    <About paragraphs={resume.about} />
+    <ProjectsList projects={featured} />
+    <Skills skills={resume.skills} />
+    <Experience experience={resume.experience} />
+    <Articles articles={articles} />
+  </main>
+</BaseLayout>

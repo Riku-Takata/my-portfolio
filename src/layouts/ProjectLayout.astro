@@ -1,0 +1,68 @@
+---
+import type { z } from 'astro/zod';
+import type { projectSchema } from '../lib/schemas';
+import BaseLayout from './BaseLayout.astro';
+import Container from '../components/common/Container.astro';
+import Badge from '../components/ui/Badge.astro';
+import LinkButton from '../components/ui/LinkButton.astro';
+import ExternalLink from '../components/icons/ExternalLink.astro';
+import { buildCreativeWorkJsonLd } from '../lib/jsonld';
+import { formatPeriod } from '../lib/format';
+import { SITE_NAME } from '../lib/site';
+
+interface Props {
+  project: { id: string; data: z.output<typeof projectSchema> };
+}
+
+const { project } = Astro.props;
+const { title, period, summary, tech, links } = project.data;
+const periodText = formatPeriod(period);
+---
+
+<BaseLayout
+  title={`${title} | ${SITE_NAME}`}
+  description={summary}
+  ogImage={`/og/${project.id}.png`}
+  type="article"
+  jsonLd={buildCreativeWorkJsonLd(project.data)}
+>
+  <main class="py-16">
+    <Container>
+      <h1 class="text-3xl font-semibold tracking-tight">{title}</h1>
+      <time
+        datetime={period.start}
+        class="mt-2 block text-sm text-zinc-500 dark:text-zinc-400"
+      >
+        {periodText}
+      </time>
+      <p class="mt-4 text-base leading-7">{summary}</p>
+      <div class="mt-4 flex flex-wrap gap-1.5">
+        {tech.map((t) => (
+          <Badge>{t}</Badge>
+        ))}
+      </div>
+      {(links?.demo || links?.github) && (
+        <div class="mt-4 flex flex-wrap gap-2">
+          {links?.demo && (
+            <LinkButton href={links.demo}>
+              {'Live Demo'}
+              <ExternalLink />
+            </LinkButton>
+          )}
+          {links?.github && (
+            <LinkButton href={links.github}>
+              {'GitHub Code'}
+              <ExternalLink />
+            </LinkButton>
+          )}
+        </div>
+      )}
+      <div class="prose prose-zinc dark:prose-invert mt-12 max-w-none">
+        <slot />
+      </div>
+      <div class="mt-12">
+        <LinkButton href="/#projects">← Featured Projects へ戻る</LinkButton>
+      </div>
+    </Container>
+  </main>
+</BaseLayout>

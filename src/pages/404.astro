@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Container from '../components/common/Container.astro';
+import LinkButton from '../components/ui/LinkButton.astro';
+import { SITE_NAME } from '../lib/site';
+---
+
+<BaseLayout
+  title={`ページが見つかりません | ${SITE_NAME}`}
+  description="お探しのページは見つかりませんでした。URL が変わったか、ページが削除された可能性があります。"
+  ogImage="/og/index.png"
+  type="website"
+>
+  <main class="py-16">
+    <Container>
+      <h1 class="text-3xl font-semibold tracking-tight">
+        ページが見つかりません
+      </h1>
+      <div class="mt-6">
+        <LinkButton href="/">トップへ戻る</LinkButton>
+      </div>
+    </Container>
+  </main>
+</BaseLayout>
