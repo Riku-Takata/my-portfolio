@@ -22,3 +22,8 @@
     background-color: var(--shiki-dark-bg) !important;
   }
 }
+
+/* sticky の Header(h-14 と下の境界線)に、アンカーで飛んだ先の見出しが隠れないようにする */
+html {
+  scroll-padding-top: 4rem;
+}

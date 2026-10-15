@@ -2,7 +2,6 @@
 import type { z } from 'astro/zod';
 import type { projectSchema } from '../lib/schemas';
 import BaseLayout from './BaseLayout.astro';
-import Header from '../components/common/Header.astro';
 import Container from '../components/common/Container.astro';
 import Badge from '../components/ui/Badge.astro';
 import LinkButton from '../components/ui/LinkButton.astro';
@@ -27,7 +26,6 @@ const periodText = formatPeriod(period);
   type="article"
   jsonLd={buildCreativeWorkJsonLd(project.data)}
 >
-  <Header />
   <main class="py-16">
     <Container>
       <h1 class="text-3xl font-semibold tracking-tight">{title}</h1>
