@@ -167,14 +167,31 @@ describe('dist: About と Media Policy', () => {
     slide: profile.links.speakerDeck,
   } as const;
 
-  it('AC-15〜AC-17: 件の順、媒体名、description、role', () => {
+  it('AC-15: Media Policy の件数と順', () => {
     const items = policyItems();
     expect(items).toHaveLength(mediaPolicy.length);
+    expect(mediaPolicy.map((m) => m.media)).toEqual([
+      'github',
+      'zenn',
+      'note',
+      'slide',
+    ]);
+  });
+
+  it('AC-16: 各件に媒体名と description が含まれる', () => {
+    const items = policyItems();
     items.forEach((li, i) => {
       const m = mediaPolicy[i];
       const t = text(li.html);
       expect(t, `件 ${i}`).toContain(names[m.media]);
       expect(t, `件 ${i}`).toContain(norm(m.description));
+    });
+  });
+
+  it('AC-17: 各件に role の要素がある', () => {
+    const items = policyItems();
+    items.forEach((li, i) => {
+      const m = mediaPolicy[i];
       const role = allElements(li.html).filter((e) => {
         const c = classes(e.tag);
         return (
