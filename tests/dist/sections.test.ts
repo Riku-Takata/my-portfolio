@@ -1,4 +1,4 @@
-// T-014 の受け入れ基準 8〜17(配置、#skills、#experience)をビルド後の HTML で確かめる。期間と種別の関数の振る舞いは tests/unit/format.test.ts で確かめる
+// T-014 の受け入れ基準 8〜17(配置、#experience)をビルド後の HTML で確かめる。期間と種別の関数の振る舞いは tests/unit/format.test.ts で確かめる
 import { assert, describe, expect, it } from 'vitest';
 import { resume } from '../../src/content/resume';
 import { sortExperience } from '../../src/lib/format';
@@ -85,35 +85,32 @@ function inner(el: El, name: string): El[] {
     .filter((e) => tagName(e) === name);
 }
 
-let cache: { html: string; skills: El; experience: El } | undefined;
+let cache: { html: string; experience: El } | undefined;
 function page() {
   if (!cache) {
     const html = readDist('index.html');
-    const skills = elementsWithId(html, 'skills');
     const experience = elementsWithId(html, 'experience');
-    expect(skills).toHaveLength(1);
     expect(experience).toHaveLength(1);
-    cache = { html, skills: skills[0], experience: experience[0] };
+    cache = { html, experience: experience[0] };
   }
   return cache;
 }
 
-describe('dist/index.html: skills と experience', () => {
-  it('#skills と #experience は section で、ただ1つの main の中にある', () => {
-    const { html, skills, experience } = page();
-    expect(skills.tag.startsWith('<section')).toBe(true);
+describe('dist/index.html: experience', () => {
+  it('#experience は section で、ただ1つの main の中にある', () => {
+    const { html, experience } = page();
     expect(experience.tag.startsWith('<section')).toBe(true);
     expect(startTags(html, 'main')).toHaveLength(1);
     const main = outer(html, html.search(/<main(?=[\s>/])/i));
-    for (const el of [skills, experience]) {
+    for (const el of [experience]) {
       expect(el.from).toBeGreaterThan(main.from);
       expect(el.to).toBeLessThan(main.to);
     }
   });
 
-  it('id は top, about, projects, skills, experience の順に出てくる', () => {
+  it('id は top, about, projects, experience, articles の順に出てくる', () => {
     const { html } = page();
-    const starts = ['top', 'about', 'projects', 'skills', 'experience'].map(
+    const starts = ['top', 'about', 'projects', 'experience', 'articles'].map(
       (id) => {
         const els = elementsWithId(html, id);
         expect(els, id).toHaveLength(1);
@@ -123,56 +120,11 @@ describe('dist/index.html: skills と experience', () => {
     expect([...starts].sort((a, b) => a - b)).toEqual(starts);
   });
 
-  it('#skills と #experience の h2 が1つずつあり、見出しの文字が合う', () => {
-    const { skills, experience } = page();
-    const s = inner(skills, 'h2');
+  it('#experience の h2 が1つあり、見出しの文字が合う', () => {
+    const { experience } = page();
     const e = inner(experience, 'h2');
-    expect(s).toHaveLength(1);
     expect(e).toHaveLength(1);
-    expect(text(s[0].html)).toBe('Technical Skills');
     expect(text(e[0].html)).toBe('Experience & Education');
-  });
-
-  it('#skills の dl の dt が resume.skills の category と一致する', () => {
-    const { skills } = page();
-    const dls = inner(skills, 'dl');
-    expect(dls).toHaveLength(1);
-    const dts = inner(dls[0], 'dt').map((e) => text(e.html));
-    expect(dts).toEqual(resume.skills.map((s) => norm(s.category)));
-  });
-
-  it('#skills の dd の Badge が resume.skills の items と同じ順に並ぶ', () => {
-    const { skills } = page();
-    const dl = inner(skills, 'dl')[0];
-    const dds = inner(dl, 'dd');
-    expect(dds).toHaveLength(resume.skills.length);
-    dds.forEach((dd, i) => {
-      const badges = inner(dd, 'span')
-        .filter((s) => {
-          const c = classes(s.tag);
-          return (
-            c.includes('font-mono') &&
-            c.includes('text-xs') &&
-            c.includes('border')
-          );
-        })
-        .map((s) => text(s.html));
-      expect(badges).toEqual(resume.skills[i].items.map(norm));
-    });
-  });
-
-  it('#skills に評価の表示(%・星・progress・meter・style)がない', () => {
-    const { skills } = page();
-    const t = text(skills.html);
-    for (const ch of ['%', '★', '☆']) expect(t).not.toContain(ch);
-    const lower = skills.html.toLowerCase();
-    expect(lower).not.toContain('<progress');
-    expect(lower).not.toContain('<meter');
-    for (const el of allElements(skills.html)) {
-      const a = attrs(el.tag);
-      expect(['progressbar', 'meter']).not.toContain(a.get('role'));
-      expect(a.has('style')).toBe(false);
-    }
   });
 
   it('#experience の ol の直下の li が resume.experience の件数と同じ', () => {
