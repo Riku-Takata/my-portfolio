@@ -4,12 +4,13 @@ import { buildPersonJsonLd } from '../lib/jsonld';
 import Hero from '../components/sections/Hero.astro';
 import About from '../components/sections/About.astro';
 import ProjectsList from '../components/sections/ProjectsList.astro';
-import Skills from '../components/sections/Skills.astro';
 import Experience from '../components/sections/Experience.astro';
 import Articles from '../components/sections/Articles.astro';
 import { fetchLatestArticles } from '../lib/zenn';
 import { resume } from '../content/resume';
+import { loadProfile } from '../lib/content';
 
+const profile = loadProfile();
 const { nameJa, nameEn } = resume.profile;
 const articles = await fetchLatestArticles();
 ---
@@ -21,10 +22,13 @@ const articles = await fetchLatestArticles();
   jsonLd={buildPersonJsonLd()}
 >
   <main class="pb-16">
-    <Hero profile={resume.profile} />
-    <About paragraphs={resume.about} />
+    <Hero profile={profile} />
+    <About
+      domains={resume.domains}
+      mediaPolicy={resume.mediaPolicy}
+      links={profile.links}
+    />
     <ProjectsList />
-    <Skills skills={resume.skills} />
     <Experience experience={resume.experience} />
     <Articles articles={articles} />
   </main>

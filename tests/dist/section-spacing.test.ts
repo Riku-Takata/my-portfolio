@@ -25,7 +25,7 @@ function sectionById(
   return { tag: m[0], body };
 }
 
-const IDS = ['about', 'projects', 'skills', 'experience', 'articles'];
+const IDS = ['about', 'projects', 'experience', 'articles'];
 
 describe('dist/index.html: セクションの余白', () => {
   const html = readDist('index.html');
