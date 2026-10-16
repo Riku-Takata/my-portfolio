@@ -28,7 +28,9 @@ export async function fetchLatestNotes(
       console.warn(`note の RSS が HTTP ${res.status} を返しました`);
       return [];
     }
-    const xml = await res.text();
+    // 元の Response は読まずに残す(同じ Response を何度読んでも本文が取れるように)
+    const body = typeof res.clone === 'function' ? res.clone() : res;
+    const xml = await body.text();
     if (XMLValidator.validate(xml) !== true) {
       console.warn('note の RSS が正しい XML ではありません');
       return [];

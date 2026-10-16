@@ -103,16 +103,22 @@ describe('fetchLatestNotes', () => {
   });
 
   it('件数を count で切る(既定5件)', async () => {
+    const days = [4, 1, 7, 2, 6, 3, 5];
     const body = rss(
-      Array.from({ length: 7 }, (_, i) =>
-        item(i, `Mon, 0${i + 1} Sep 2026 00:00:00 +0000`),
-      ).join(''),
+      days
+        .map(
+          (d) =>
+            `<item><title>t${d}</title><link>https://example.com/n/${d}</link><pubDate>Mon, 0${d} Sep 2026 00:00:00 +0000</pubDate></item>`,
+        )
+        .join(''),
     );
-    fetchMock.mockImplementation(async () => xmlResponse(body));
+    fetchMock.mockResolvedValue(xmlResponse(body));
     const r5 = await fetchLatestNotes();
-    expect(r5.map((a) => a.title)).toEqual(['t6', 't5', 't4', 't3', 't2']);
+    expect(r5.map((a) => a.title)).toEqual(['t7', 't6', 't5', 't4', 't3']);
     const r3 = await fetchLatestNotes('https://example.com/feed', 3);
-    expect(r3).toHaveLength(3);
+    expect(r3.map((a) => a.title)).toEqual(['t7', 't6', 't5']);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it('1件だけでも配列で返す', async () => {
