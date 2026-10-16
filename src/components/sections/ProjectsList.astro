@@ -1,14 +1,9 @@
 ---
-import type { z } from 'astro/zod';
-import type { projectSchema } from '../../lib/schemas';
+import { loadFeaturedProjects } from '../../lib/content';
 import Section from '../common/Section.astro';
 import ProjectCard from '../ui/ProjectCard.astro';
 
-interface Props {
-  projects: { id: string; data: z.output<typeof projectSchema> }[];
-}
-
-const { projects } = Astro.props;
+const projects = loadFeaturedProjects();
 ---
 
 <Section id="projects" label="Featured Projects">
