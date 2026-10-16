@@ -255,7 +255,7 @@ describe('dist/index.html の #projects', () => {
 });
 
 describe('dist/index.html 全体', () => {
-  it('AC-15: <a> の入れ子がない', () => {
+  it('<a> の入れ子がない', () => {
     let depth = 0;
     let max = 0;
     for (const m of html.matchAll(/<a(?=[\s>])|<\/a>/g)) {
@@ -265,7 +265,7 @@ describe('dist/index.html 全体', () => {
     expect(max).toBeLessThanOrEqual(1);
   });
 
-  it('AC-15: target="_blank" の <a> は rel に noopener を含む', () => {
+  it('target="_blank" の <a> は rel に noopener を含む', () => {
     for (const tag of startTags(html, 'a')) {
       const a = attrs(tag);
       if (a.get('target') === '_blank') {
