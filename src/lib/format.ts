@@ -1,5 +1,3 @@
-import type { TimelineItem } from './schemas';
-
 // 半角スペース、en dash(U+2013)、半角スペースの3文字
 const EN_DASH_SEPARATOR = ' – ';
 const YEAR_MONTH = /^(\d{4})-(0[1-9]|1[0-2])$/;
@@ -57,7 +55,16 @@ export function jstYear(date: Date = new Date()): number {
   return new Date(date.getTime() + JST_OFFSET_MS).getUTCFullYear();
 }
 
-const TIMELINE_KIND_LABELS: Record<TimelineItem['kind'], string> = {
+type TimelineKind =
+  | 'education'
+  | 'research'
+  | 'exhibition'
+  | 'presentation'
+  | 'conference'
+  | 'internship'
+  | 'work';
+
+const TIMELINE_KIND_LABELS: Record<TimelineKind, string> = {
   education: 'Education',
   research: 'Research',
   exhibition: 'Exhibition',
@@ -68,8 +75,8 @@ const TIMELINE_KIND_LABELS: Record<TimelineItem['kind'], string> = {
 };
 
 // 種別の表示名
-export function timelineKindLabel(kind: TimelineItem['kind']): string {
-  return TIMELINE_KIND_LABELS[kind];
+export function timelineKindLabel(kind: TimelineKind | string): string {
+  return TIMELINE_KIND_LABELS[kind as TimelineKind];
 }
 
 // 期間を '2024.04 – 2026.03' にする。end が 'present' なら 'Present'、未指定なら start だけ
