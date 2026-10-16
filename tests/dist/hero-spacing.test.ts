@@ -14,7 +14,7 @@ function sectionTags(html: string, id: string): string[] {
     .filter((tag) => attrs(tag).get('id') === id);
 }
 
-const IDS = ['about', 'projects', 'experience', 'articles'];
+const IDS = ['about', 'projects', 'timeline', 'articles'];
 
 describe('Hero と About の間の余白 (T-032)', () => {
   const html = readDist('index.html');
@@ -42,7 +42,7 @@ describe('Hero と About の間の余白 (T-032)', () => {
     expect(ptTokens).toEqual([]);
   });
 
-  it("AC-4: about, projects, experience, articles の開始タグの class のうち /^py-/ に合うトークンが ['py-12'] に等しい", () => {
+  it("AC-4: about, projects, timeline, articlesの開始タグの class のうち /^py-/ に合うトークンが ['py-12'] に等しい", () => {
     for (const id of IDS) {
       const tags = sectionTags(html, id);
       expect(tags).toHaveLength(1);

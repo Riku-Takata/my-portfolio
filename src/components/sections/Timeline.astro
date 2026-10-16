@@ -1,0 +1,63 @@
+---
+import type { TimelineItem } from '../../lib/schemas';
+import { formatTimelinePeriod, timelineKindLabel } from '../../lib/format';
+import { linkLabel, sortLinks } from '../../lib/links';
+import Section from '../common/Section.astro';
+import Github from '../icons/Github.astro';
+import Zenn from '../icons/Zenn.astro';
+import Note from '../icons/Note.astro';
+import SpeakerDeck from '../icons/SpeakerDeck.astro';
+import ExternalLink from '../icons/ExternalLink.astro';
+
+interface Props {
+  items: readonly TimelineItem[];
+}
+
+const { items } = Astro.props;
+
+const ICONS = {
+  github: Github,
+  zenn: Zenn,
+  note: Note,
+  slide: SpeakerDeck,
+  demo: ExternalLink,
+};
+---
+
+<Section id="timeline" label="Timeline">
+  <ol class="mt-6 space-y-6 border-l border-zinc-200 pl-6 dark:border-zinc-800">
+    {items.map((item) => (
+      <li>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400">
+          <time datetime={item.period.start}>
+            {formatTimelinePeriod(item.period)}
+          </time>
+          {' · '}
+          <span>{timelineKindLabel(item.kind)}</span>
+        </p>
+        <h3 class="text-base font-semibold">{item.title}</h3>
+        {item.org && (
+          <p class="text-sm text-zinc-500 dark:text-zinc-400">{item.org}</p>
+        )}
+        {item.links.length > 0 && (
+          <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+            {sortLinks(item.links).map((link) => {
+              const Icon = ICONS[link.media];
+              return (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 text-indigo-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:text-indigo-400"
+                >
+                  <Icon class="size-3.5" />
+                  {link.label ?? linkLabel(link.media)}
+                </a>
+              );
+            })}
+          </p>
+        )}
+      </li>
+    ))}
+  </ol>
+</Section>

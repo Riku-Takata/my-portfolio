@@ -239,8 +239,8 @@ describe('dist: Skills がない', () => {
       expect(links, file).toEqual([
         ['/#about', 'About'],
         ['/#projects', 'Projects'],
-        ['/#experience', 'Experience'],
         ['/#articles', 'Articles'],
+        ['/#timeline', 'Timeline'],
       ]);
     }
   });
