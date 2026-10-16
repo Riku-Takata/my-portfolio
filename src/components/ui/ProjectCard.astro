@@ -1,48 +1,44 @@
 ---
-import type { z } from 'astro/zod';
-import type { projectSchema } from '../../lib/schemas';
-import { formatPeriod } from '../../lib/format';
+import type { ProjectEntry } from '../../lib/schemas';
+import { formatExperiencePeriod } from '../../lib/format';
+import { sortLinks, linkLabel } from '../../lib/links';
 import Badge from './Badge.astro';
 import LinkButton from './LinkButton.astro';
+import Github from '../icons/Github.astro';
 import ExternalLink from '../icons/ExternalLink.astro';
 
 interface Props {
-  project: { id: string; data: z.output<typeof projectSchema> };
+  project: ProjectEntry;
 }
 
 const { project } = Astro.props;
-const { title, period, summary, tech, outcomes, links } = project.data;
-const periodText = formatPeriod(period);
-const detailHref = `/projects/${project.id}/`;
+const periodText = formatExperiencePeriod(project.context.period);
+const sortedLinks = sortLinks(project.links);
 ---
 
 <article class="rounded-lg border border-zinc-200 p-5 dark:border-zinc-800">
-  <h3 class="text-base font-semibold">{title}</h3>
-  <p class="text-sm text-zinc-500 dark:text-zinc-400">{periodText}</p>
-  <p class="mt-3 text-sm text-zinc-700 dark:text-zinc-300">{summary}</p>
+  <div class="flex flex-wrap items-center gap-2">
+    <Badge>{project.context.label}</Badge>
+    <span class="text-sm text-zinc-500 dark:text-zinc-400">{periodText}</span>
+  </div>
+  <h3 class="mt-3 text-base font-semibold">{project.title}</h3>
+  <p class="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{project.summary}</p>
+  <p class="mt-3 border-l-2 border-zinc-300 pl-3 text-sm font-medium dark:border-zinc-700">
+    {project.highlight}
+  </p>
   <div class="mt-3 flex flex-wrap gap-1.5">
-    {tech.map((t) => (
+    {project.techStack.map((t) => (
       <Badge>{t}</Badge>
     ))}
   </div>
-  <ul class="mt-3 list-disc pl-5 text-sm">
-    {outcomes.map((o) => (
-      <li>{o}</li>
-    ))}
-  </ul>
-  <div class="mt-4 flex flex-wrap gap-2">
-    {links?.demo && (
-      <LinkButton href={links.demo}>
-        {'Live Demo'}
-        <ExternalLink />
-      </LinkButton>
-    )}
-    {links?.github && (
-      <LinkButton href={links.github}>
-        {'GitHub Code'}
-        <ExternalLink />
-      </LinkButton>
-    )}
-    <LinkButton href={detailHref}>技術解説を読む →</LinkButton>
-  </div>
+  {sortedLinks.length > 0 && (
+    <div class="mt-4 flex flex-wrap gap-2">
+      {sortedLinks.map((link) => (
+        <LinkButton href={link.url}>
+          {link.media === 'github' ? <Github /> : <ExternalLink />}
+          <span>{link.label ?? linkLabel(link.media)}</span>
+        </LinkButton>
+      ))}
+    </div>
+  )}
 </article>

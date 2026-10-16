@@ -7,14 +7,11 @@ import ProjectsList from '../components/sections/ProjectsList.astro';
 import Timeline from '../components/sections/Timeline.astro';
 import Articles from '../components/sections/Articles.astro';
 import { fetchLatestArticles } from '../lib/zenn';
-import { getCollection } from 'astro:content';
-import { selectFeatured } from '../lib/projects';
 import { resume } from '../content/resume';
 import { loadProfile, loadTimeline } from '../lib/content';
 
 const profile = loadProfile();
 const { nameJa, nameEn } = resume.profile;
-const featured = selectFeatured(await getCollection('projects'));
 const articles = await fetchLatestArticles();
 ---
 <BaseLayout
@@ -31,7 +28,7 @@ const articles = await fetchLatestArticles();
       mediaPolicy={resume.mediaPolicy}
       links={profile.links}
     />
-    <ProjectsList projects={featured} />
+    <ProjectsList />
     <Timeline items={loadTimeline()} />
     <Articles articles={articles} />
   </main>

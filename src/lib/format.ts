@@ -98,3 +98,5 @@ export function formatTimelinePeriod(period: {
   }
   return `${startText}${EN_DASH_SEPARATOR}${end.year}.${end.month}`;
 }
+
+export const formatExperiencePeriod = formatTimelinePeriod;
