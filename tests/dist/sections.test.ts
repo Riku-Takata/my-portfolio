@@ -1,7 +1,10 @@
-// T-014 の受け入れ基準 8〜17(配置、#experience)をビルド後の HTML で確かめる。期間と種別の関数の振る舞いは tests/unit/format.test.ts で確かめる
+// セクションの配置と #timeline をビルド後の HTML で確かめる。期間と種別の関数の振る舞いは tests/unit/format.test.ts で確かめる
 import { assert, describe, expect, it } from 'vitest';
-import { resume } from '../../src/content/resume';
-import { sortExperience } from '../../src/lib/format';
+import { loadTimeline } from '../../src/lib/content';
+import {
+  formatTimelinePeriod,
+  timelineKindLabel,
+} from '../../src/lib/format';
 import { attrs, decode, readDist } from './html';
 
 const VOID = new Set(['img', 'br', 'meta', 'link', 'input', 'source', 'hr']);
@@ -85,32 +88,32 @@ function inner(el: El, name: string): El[] {
     .filter((e) => tagName(e) === name);
 }
 
-let cache: { html: string; experience: El } | undefined;
+let cache: { html: string; timeline: El } | undefined;
 function page() {
   if (!cache) {
     const html = readDist('index.html');
-    const experience = elementsWithId(html, 'experience');
-    expect(experience).toHaveLength(1);
-    cache = { html, experience: experience[0] };
+    const timeline = elementsWithId(html, 'timeline');
+    expect(timeline).toHaveLength(1);
+    cache = { html, timeline: timeline[0] };
   }
   return cache;
 }
 
-describe('dist/index.html: experience', () => {
-  it('#experience は section で、ただ1つの main の中にある', () => {
-    const { html, experience } = page();
-    expect(experience.tag.startsWith('<section')).toBe(true);
+describe('dist/index.html: timeline', () => {
+  it('#timeline は section で、ただ1つの main の中にある', () => {
+    const { html, timeline } = page();
+    expect(timeline.tag.startsWith('<section')).toBe(true);
     expect(startTags(html, 'main')).toHaveLength(1);
     const main = outer(html, html.search(/<main(?=[\s>/])/i));
-    for (const el of [experience]) {
+    for (const el of [timeline]) {
       expect(el.from).toBeGreaterThan(main.from);
       expect(el.to).toBeLessThan(main.to);
     }
   });
 
-  it('id は top, about, projects, experience, articles の順に出てくる', () => {
+  it('id は top, about, projects, timeline, articles の順に出てくる', () => {
     const { html } = page();
-    const starts = ['top', 'about', 'projects', 'experience', 'articles'].map(
+    const starts = ['top', 'about', 'projects', 'timeline', 'articles'].map(
       (id) => {
         const els = elementsWithId(html, id);
         expect(els, id).toHaveLength(1);
@@ -120,66 +123,55 @@ describe('dist/index.html: experience', () => {
     expect([...starts].sort((a, b) => a - b)).toEqual(starts);
   });
 
-  it('#experience の h2 が1つあり、見出しの文字が合う', () => {
-    const { experience } = page();
-    const e = inner(experience, 'h2');
+  it('#timeline の h2 が1つあり、見出しの文字が合う', () => {
+    const { timeline } = page();
+    const e = inner(timeline, 'h2');
     expect(e).toHaveLength(1);
-    expect(text(e[0].html)).toBe('Experience & Education');
+    expect(text(e[0].html)).toBe('Timeline');
   });
 
-  it('#experience の ol の直下の li が resume.experience の件数と同じ', () => {
-    const { experience } = page();
-    const ols = inner(experience, 'ol');
+  it('#timeline の ol の直下の li が loadTimeline() の件数と同じ', () => {
+    const { timeline } = page();
+    const ols = inner(timeline, 'ol');
     expect(ols).toHaveLength(1);
     const lis = inner(ols[0], 'li');
     const direct = lis.filter(
       (li) =>
         !lis.some((o) => o !== li && o.from < li.from && li.to <= o.to),
     );
-    expect(direct).toHaveLength(resume.experience.length);
+    expect(direct).toHaveLength(loadTimeline().length);
   });
 
-  it('#experience の各 li の time の datetime と表示が新しい順の経歴と一致する', () => {
-    const { experience } = page();
-    const sorted = sortExperience(resume.experience);
-    const lis = inner(inner(experience, 'ol')[0], 'li');
-    expect(lis).toHaveLength(sorted.length);
+  it('#timeline の各 li の time の datetime と表示が項目と一致する', () => {
+    const { timeline } = page();
+    const items = loadTimeline();
+    const lis = inner(inner(timeline, 'ol')[0], 'li');
+    expect(lis).toHaveLength(items.length);
     lis.forEach((li, i) => {
       const times = inner(li, 'time');
       expect(times).toHaveLength(1);
       const datetime = attrs(times[0].tag).get('datetime') ?? '';
-      expect(datetime).toBe(sorted[i].start);
-      expect(datetime).toMatch(/^\d{4}-(0[1-9]|1[0-2])$/);
-      // 期間の文字の形は tests/unit/format.test.ts で確かめる。ここでは経歴の年月が出ていることを見る
-      const shown = text(times[0].html);
-      const end = (sorted[i] as { end?: string }).end;
-      for (const ym of [sorted[i].start, end]) {
-        if (ym === undefined || !/^\d{4}-\d{2}$/.test(ym)) continue;
-        expect(shown).toContain(ym.slice(0, 4));
-        expect(shown).toContain(ym.slice(5, 7));
-      }
+      expect(datetime).toBe(items[i].period.start);
+      expect(text(times[0].html)).toBe(formatTimelinePeriod(items[i].period));
     });
   });
 
-  it('#experience の各 li に種別・title・org・note が含まれる', () => {
-    const { experience } = page();
-    const sorted = sortExperience(resume.experience);
-    const lis = inner(inner(experience, 'ol')[0], 'li');
+  it('#timeline の各 li に種別・title・org が含まれる', () => {
+    const { timeline } = page();
+    const items = loadTimeline();
+    const lis = inner(inner(timeline, 'ol')[0], 'li');
     lis.forEach((li, i) => {
       const t = text(li.html);
-      const e = sorted[i];
-      // 種別と表示名の対応は tests/unit/format.test.ts で確かめる
-      expect(t.toLowerCase()).toContain(e.kind);
+      const e = items[i];
+      expect(t).toContain(timelineKindLabel(e.kind));
       expect(t).toContain(norm(e.title));
-      expect(t).toContain(norm(e.org));
-      const note = (e as { note?: string }).note;
-      if (note) expect(t).toContain(norm(note));
+      if (e.org) expect(t).toContain(norm(e.org));
     });
   });
 
-  it('#experience は ol の縦線だけで装飾する', () => {
-    const { experience } = page();
-    const ol = inner(experience, 'ol')[0];
+  it('#timeline は ol の縦線だけで装飾する', () => {
+    const { timeline } = page();
+    const ol = inner(timeline, 'ol')[0];
     const c = classes(ol.tag);
     for (const token of [
       'border-l',
@@ -190,7 +182,7 @@ describe('dist/index.html: experience', () => {
     }
     const forbidden =
       /^(border|border-.*|dark:border-.*|rounded.*|shadow.*|ring.*|bg-.*|dark:bg-.*)$/;
-    for (const el of allElements(experience.html)) {
+    for (const el of allElements(timeline.html)) {
       if (el.from === ol.from) continue;
       for (const token of classes(el.tag)) {
         expect(token, el.tag).not.toMatch(forbidden);

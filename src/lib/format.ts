@@ -55,23 +55,32 @@ export function jstYear(date: Date = new Date()): number {
   return new Date(date.getTime() + JST_OFFSET_MS).getUTCFullYear();
 }
 
-export type ExperienceKind =
-  'education' | 'internship' | 'presentation' | 'work';
+type TimelineKind =
+  | 'education'
+  | 'research'
+  | 'exhibition'
+  | 'presentation'
+  | 'conference'
+  | 'internship'
+  | 'work';
 
-const EXPERIENCE_KIND_LABELS: Record<ExperienceKind, string> = {
+const TIMELINE_KIND_LABELS: Record<TimelineKind, string> = {
   education: 'Education',
-  internship: 'Internship',
+  research: 'Research',
+  exhibition: 'Exhibition',
   presentation: 'Presentation',
+  conference: 'Conference',
+  internship: 'Internship',
   work: 'Work',
 };
 
 // 種別の表示名
-export function experienceKindLabel(kind: ExperienceKind): string {
-  return EXPERIENCE_KIND_LABELS[kind];
+export function timelineKindLabel(kind: TimelineKind | string): string {
+  return TIMELINE_KIND_LABELS[kind as TimelineKind];
 }
 
-// 経歴の期間を '2024.04 – 2026.03' にする。end が 'present' なら 'Present'、未指定なら start だけ
-export function formatExperiencePeriod(period: {
+// 期間を '2024.04 – 2026.03' にする。end が 'present' なら 'Present'、未指定なら start だけ
+export function formatTimelinePeriod(period: {
   start: string;
   end?: string;
 }): string {
@@ -90,11 +99,4 @@ export function formatExperiencePeriod(period: {
   return `${startText}${EN_DASH_SEPARATOR}${end.year}.${end.month}`;
 }
 
-// start の新しい順に並べた新しい配列を返す(安定ソート。元の配列は変えない)
-export function sortExperience<T extends { start: string }>(
-  items: readonly T[],
-): T[] {
-  return [...items].sort((a, b) =>
-    a.start < b.start ? 1 : a.start > b.start ? -1 : 0,
-  );
-}
+export const formatExperiencePeriod = formatTimelinePeriod;
