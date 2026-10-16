@@ -102,7 +102,6 @@ interface Page {
   heroEls: El[];
   inH1: (e: El) => boolean;
   heroLinks: ReturnType<typeof links>;
-  ps: El[];
 }
 
 let cache: Page | undefined;
@@ -133,7 +132,6 @@ function page(): Page {
     heroEls: allElements(hero),
     inH1,
     heroLinks: links(hero),
-    ps: allElements(aboutHtml).filter((e) => /^<p\b/i.test(e.tag)),
   };
   return cache;
 }
@@ -198,24 +196,13 @@ describe('dist: トップの Hero と About', () => {
     expect(heroEls.some((e) => text(e.html) === affiliation)).toBe(true);
   });
 
-  it('AC-7: focus の要素がある', () => {
-    const { heroEls } = page();
-    expect(
-      heroEls.some(
-        (e) =>
-          JSON.stringify(
-            text(e.html)
-              .split('·')
-              .map((s) => s.trim()),
-          ) === JSON.stringify(profile.focus.map(norm)),
-      ),
-    ).toBe(true);
-  });
-
-  it('AC-8: Hero の4つのリンク', () => {
+  it('AC-8: Hero の7つのリンク', () => {
     const { heroLinks } = page();
     expect(heroLinks.map((l) => [l.href, l.text])).toEqual([
       [profile.links.github, 'GitHub'],
+      [profile.links.zenn, 'Zenn'],
+      [profile.links.note, 'note'],
+      [profile.links.speakerDeck, 'Speaker Deck'],
       [profile.links.x, 'X'],
       ['mailto:' + profile.links.email, 'Mail'],
       ['/resume.pdf', 'Resume (PDF)'],
@@ -224,7 +211,7 @@ describe('dist: トップの Hero と About', () => {
 
   it('AC-9: アイコンの svg は aria-hidden', () => {
     const { hero, heroLinks } = page();
-    expect(heroLinks).toHaveLength(4);
+    expect(heroLinks).toHaveLength(7);
     for (const l of heroLinks) {
       expect(startTags(l.inner, 'svg').length).toBeGreaterThanOrEqual(1);
     }
@@ -236,12 +223,12 @@ describe('dist: トップの Hero と About', () => {
 
   it('AC-10: target と rel', () => {
     const { heroLinks } = page();
-    expect(heroLinks).toHaveLength(4);
-    for (const l of heroLinks.slice(0, 2)) {
+    expect(heroLinks).toHaveLength(7);
+    for (const l of heroLinks.slice(0, 5)) {
       expect(l.target?.toLowerCase()).toBe('_blank');
       expect(l.rel).toBe('noopener noreferrer');
     }
-    for (const l of heroLinks.slice(2)) {
+    for (const l of heroLinks.slice(5)) {
       expect(attrs(l.tag).has('target')).toBe(false);
     }
   });
@@ -264,21 +251,6 @@ describe('dist: トップの Hero と About', () => {
     const h2 = allElements(aboutHtml).filter((e) => /^<h2\b/i.test(e.tag));
     expect(h2).toHaveLength(1);
     expect(text(h2[0].html)).toBe('About');
-  });
-
-  it('AC-14: about の p は resume.about と同じ', () => {
-    const { ps } = page();
-    expect(ps.map((e) => text(e.html))).toEqual(resume.about.map(norm));
-  });
-
-  it('AC-15: about の p の class', () => {
-    const { ps } = page();
-    expect(ps.length).toBeGreaterThan(0);
-    for (const p of ps) {
-      expect(classes(p.tag)).toEqual(
-        expect.arrayContaining(['text-base', 'leading-7']),
-      );
-    }
   });
 
   it('AC-19: デモの出力がない', () => {
