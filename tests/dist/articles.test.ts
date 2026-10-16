@@ -121,9 +121,9 @@ describe('dist/index.html の Articles', () => {
     expect(text(h2[0].html)).toBe('Articles');
   });
 
-  it('AC-8: Experience があるときはその後ろにある', () => {
+  it('AC-8: Timeline があるときはその後ろにある', () => {
     const { html, el } = articles();
-    const exp = elementsWithId(html, 'experience');
+    const exp = elementsWithId(html, 'timeline');
     if (exp.length === 0) return;
     expect(el.start).toBeGreaterThan(exp[0].start);
   });

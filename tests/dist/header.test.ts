@@ -95,12 +95,12 @@ describe('Header', () => {
       expect(hrefs, `${file}: nav anchor hrefs`).toEqual([
         '/#about',
         '/#projects',
-        '/#experience',
         '/#articles',
+        '/#timeline',
       ]);
     });
 
-    it('AC-4: nav の <a> の文字が順に About, Projects, Experience, Articles', () => {
+    it('AC-4: nav の <a> の文字が順に About, Projects, Articles, Timeline',() => {
       const headerTag = startTags(html, 'header').find(
         (t) => attrs(t).get('id') === 'site-header',
       );
@@ -121,8 +121,8 @@ describe('Header', () => {
       expect(labels, `${file}: nav anchor labels`).toEqual([
         'About',
         'Projects',
-        'Experience',
         'Articles',
+        'Timeline',
       ]);
     });
 

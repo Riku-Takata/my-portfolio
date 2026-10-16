@@ -1,22 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  experienceKindLabel,
-  formatExperiencePeriod,
-  formatPeriod,
-  formatYearMonth,
   formatDate,
-  sortExperience,
+  formatPeriod,
+  formatTimelinePeriod,
+  formatYearMonth,
+  timelineKindLabel,
 } from '../../src/lib/format';
-
-const exp = (start: string, title: string) => ({
-  kind: 'work',
-  title,
-  org: 'Org',
-  start,
-  end: 'present',
-  note: 'note',
-});
 
 describe('formatPeriod', () => {
   it('年が違う期間は en dash でつなぐ', () => {
@@ -110,62 +100,6 @@ describe('formatDate', () => {
   });
 });
 
-describe('sortExperience', () => {
-  it('start の新しい順に並べる', () => {
-    const result = sortExperience([
-      exp('2022-04', 'a'),
-      exp('2024-04', 'b'),
-      exp('2023-10', 'c'),
-    ]);
-    expect(result.map((e) => e.start)).toEqual([
-      '2024-04',
-      '2023-10',
-      '2022-04',
-    ]);
-  });
-
-  it('同じ年は月で並べる', () => {
-    const result = sortExperience([exp('2024-09', 'a'), exp('2024-10', 'b')]);
-    expect(result.map((e) => e.start)).toEqual(['2024-10', '2024-09']);
-  });
-
-  it('元の配列を書き換えず、別の配列を返す', () => {
-    const input = [
-      exp('2022-04', 'a'),
-      exp('2024-04', 'b'),
-      exp('2023-10', 'c'),
-    ];
-    const before = [...input];
-    const result = sortExperience(input);
-    expect(result).not.toBe(input);
-    expect(input).toHaveLength(before.length);
-    expect(input).toEqual(before);
-    input.forEach((item, i) => expect(item).toBe(before[i]));
-  });
-
-  it('要素は同じオブジェクトのまま', () => {
-    const input = [exp('2022-04', 'a'), exp('2024-04', 'b')];
-    const result = sortExperience(input);
-    expect(result[0]).toBe(input[1]);
-    expect(result[1]).toBe(input[0]);
-    expect(result[0]).toEqual(exp('2024-04', 'b'));
-  });
-
-  it('空配列には空配列を返す', () => {
-    expect(sortExperience([])).toEqual([]);
-  });
-
-  it('同じ start は渡した順を保つ(安定ソート)', () => {
-    const a = exp('2023-04', 'A');
-    const b = exp('2024-04', 'B');
-    const c = exp('2023-04', 'C');
-    const result = sortExperience([a, b, c]);
-    expect(result[0]).toBe(b);
-    expect(result[1]).toBe(a);
-    expect(result[2]).toBe(c);
-  });
-});
-
 describe('format.ts のモジュール境界', () => {
   it('astro: で始まるモジュールを import しない', () => {
     const source = readFileSync(
@@ -179,42 +113,51 @@ describe('format.ts のモジュール境界', () => {
   });
 });
 
-describe('formatExperiencePeriod', () => {
-  it('AC-1: start と end を en dash でつなぐ', () => {
-    const result = formatExperiencePeriod({ start: '2024-04', end: '2026-03' });
-    expect(result).toBe('2024.04 – 2026.03');
-    expect(result).toContain(' – ');
-    expect(result).not.toContain('-');
-    expect(result).not.toContain('—');
+describe('formatTimelinePeriod', () => {
+  it('AC-12: end がなければ start だけ', () => {
+    const result = formatTimelinePeriod({ start: '2025-08' });
+    expect(result).toBe('2025.08');
+    expect(result).not.toContain('–');
   });
 
-  it('AC-2: end が present なら Present', () => {
-    expect(formatExperiencePeriod({ start: '2024-04', end: 'present' })).toBe(
-      '2024.04 – Present',
+  it('AC-12: start と end を en dash でつなぐ', () => {
+    expect(formatTimelinePeriod({ start: '2025-08', end: '2025-12' })).toBe(
+      '2025.08 – 2025.12',
     );
   });
 
-  it('AC-3: end が未指定なら start だけ', () => {
-    expect(formatExperiencePeriod({ start: '2024-04' })).toBe('2024.04');
-    expect(formatExperiencePeriod({ start: '2024-04', end: undefined })).toBe(
-      '2024.04',
+  it('AC-12: end が present なら Present', () => {
+    expect(formatTimelinePeriod({ start: '2025-08', end: 'present' })).toBe(
+      '2025.08 – Present',
     );
-    expect(formatExperiencePeriod({ start: '2024-04' })).not.toContain('–');
   });
 
-  it('AC-4: YYYY-MM でない値は値を含むメッセージで throw する', () => {
-    expect(() =>
-      formatExperiencePeriod({ start: '2024/04', end: '2026-03' }),
-    ).toThrow('2024/04');
-    expect(() =>
-      formatExperiencePeriod({ start: '2024-04', end: '2026-3' }),
-    ).toThrow('2026-3');
+  it('AC-12: 同じ年月はまとめない', () => {
+    expect(formatTimelinePeriod({ start: '2025-08', end: '2025-08' })).toBe(
+      '2025.08 – 2025.08',
+    );
   });
 
-  it('AC-23: start が end より後なら両方の値を含めて throw する', () => {
+  it.each(['2025/08', '2025-8', '2025-13'])(
+    'AC-13: 形が違う start %s は throw する',
+    (value) => {
+      expect(() => formatTimelinePeriod({ start: value })).toThrow(value);
+    },
+  );
+
+  it.each(['2025/08', '2025-8', '2025-13'])(
+    'AC-13: 形が違う end %s は throw する',
+    (value) => {
+      expect(() =>
+        formatTimelinePeriod({ start: '2025-01', end: value }),
+      ).toThrow(value);
+    },
+  );
+
+  it('AC-13: start が end より後なら両方の値を含めて throw する', () => {
     let error: unknown;
     try {
-      formatExperiencePeriod({ start: '2026-04', end: '2025-03' });
+      formatTimelinePeriod({ start: '2026-04', end: '2025-03' });
     } catch (e) {
       error = e;
     }
@@ -224,23 +167,23 @@ describe('formatExperiencePeriod', () => {
     expect(message).toContain('2025-03');
   });
 
-  it('AC-23: 同じ年月は throw しない。present は start と比べない', () => {
-    expect(formatExperiencePeriod({ start: '2024-04', end: '2024-04' })).toBe(
-      '2024.04 – 2024.04',
-    );
-    expect(formatExperiencePeriod({ start: '2099-01', end: 'present' })).toBe(
+  it('AC-13: present は start と比べない', () => {
+    expect(formatTimelinePeriod({ start: '2099-01', end: 'present' })).toBe(
       '2099.01 – Present',
     );
   });
 });
 
-describe('experienceKindLabel', () => {
+describe('timelineKindLabel', () => {
   it.each([
     ['education', 'Education'],
-    ['internship', 'Internship'],
+    ['research', 'Research'],
+    ['exhibition', 'Exhibition'],
     ['presentation', 'Presentation'],
+    ['conference', 'Conference'],
+    ['internship', 'Internship'],
     ['work', 'Work'],
-  ] as const)('AC-5: %s は %s', (kind, label) => {
-    expect(experienceKindLabel(kind)).toBe(label);
+  ] as const)('AC-11: %s は %s', (kind, label) => {
+    expect(timelineKindLabel(kind)).toBe(label);
   });
 });
