@@ -1,11 +1,11 @@
 ---
-import type { ZennArticle } from '../../lib/zenn';
+import type { Article } from '../../lib/schemas';
 import { formatDate } from '../../lib/format';
 import Section from '../common/Section.astro';
 import LinkButton from '../ui/LinkButton.astro';
 
 interface Props {
-  articles: ZennArticle[];
+  articles: Article[];
 }
 
 const { articles } = Astro.props;
