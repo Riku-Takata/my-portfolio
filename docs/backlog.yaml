@@ -631,19 +631,19 @@ tasks:
   human_check: トップの Featured Projects を 375px とデスクトップ、ライトとダークで撮り、highlight が一番目に入るか、リンクのボタンの並びと文字が読みやすいかを見る。
   status: todo
 - id: T-040
-  title: Articles & Logs で Zenn と note を2列に分けて出す
+  title: Articles & Logs で Zenn と note の記事を1つの一覧に混ぜて出す
   milestone: M8
-  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う。(1) index.astro で Zenn と note の記事を両方ビルド時に取る(T-037 の関数)。(2) Articles.astro を作り替える: h2 は「Articles & Logs」、id は #articles のまま。sm 以上で2列、375px では縦に、左(上)を Zenn(h3「Tech Deep Dive」)、右(下)を note(h3「Context & Log」)にする。タブにはしない。各行は媒体バッジ(Zenn / Tech か note / Log。Badge で等幅、zinc の色だけ)、日付(formatDate の YYYY.MM.DD、<time datetime>)、タイトル(外部リンク)。各列の末尾に「Zenn の記事一覧 →」「note の記事一覧 →」(profile.links から)を出す。取れなかった列は、一覧を出さずにこのリンクだけを出す。(3) tests/dist/articles.test.ts を新しい構成に合わせて直す。CI と test:dist は ZENN_OFFLINE=1 と NOTE_OFFLINE=1 で動くので、記事がないときの表示(2つの列の見出しと一覧へのリンクがある)を確かめる。記事があるときの並び・バッジ・日付の形は、Article の配列から行のデータを作る純粋関数を src/lib に作り、tests/unit で確かめる。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
+  request: '詳細設計の「設計の変更(2026-10-16): 1ページのハブ型へ」に従う(Articles & Logs は 2026-10-19 に、列に分けず1つの一覧に混ぜる形へ変えた)。(1) index.astro で Zenn と note の記事を両方ビルド時に取る(T-037 の関数)。(2) Articles.astro を作り替える: h2 は「Articles & Logs」、id は #articles のまま。Zenn と note の記事を1つの一覧(ol)にまとめ、日付の新しい順に並べる。媒体ごとの列や見出しには分けず、タブにもしない。各行は媒体バッジ(Zenn / Tech か note / Log。Badge で等幅、zinc の色だけ)、日付(formatDate の YYYY.MM.DD、<time datetime>)、タイトル(外部リンク)。一覧の下に「Zenn の記事一覧 →」と「note の記事一覧 →」(profile.links から)を並べて出す。片方の媒体が取れなかったときは、取れた媒体の記事だけで一覧を作る。どちらも取れなかったときは、一覧を出さずに2つのリンクだけを出す。(3) tests/dist/articles.test.ts を新しい構成に合わせて直す。CI と test:dist は ZENN_OFFLINE=1 と NOTE_OFFLINE=1 で動くので、記事がないときの表示(h2 と2つの一覧へのリンクがある)を確かめる。記事があるときの混ぜ方・並び・バッジ・日付の形は、Zenn と note の Article の配列から行のデータを作る純粋関数を src/lib に作り、tests/unit で確かめる。共通の約束: vitest で .astro を描画しない。表示は tests/dist でビルド結果の HTML を読んで確かめ、ロジックは src/lib の純粋な関数にして tests/unit で確かめる。既存のテストは、request に書いたもの以外は変えない。'
   acceptance:
-  - 'dist/index.html の #articles に h2「Articles & Logs」と、h3「Tech Deep Dive」と「Context & Log」の2つの列がある'
-  - 2つの列の末尾に、profile.links.zenn と profile.links.note への外部リンク(target="_blank"、rel に noopener)がある
-  - 記事の行のデータ(媒体バッジの文字、YYYY.MM.DD の日付、新しい順)を作る関数を tests/unit で確かめている
+  - 'dist/index.html の #articles に h2「Articles & Logs」がある。媒体ごとの列の見出し(h3「Tech Deep Dive」「Context & Log」)はない'
+  - '#articles の末尾に、profile.links.zenn と profile.links.note への外部リンク(target="_blank"、rel に noopener)がある'
+  - Zenn と note の記事の配列から、1つの一覧の行のデータ(媒体バッジの文字、YYYY.MM.DD の日付、媒体をまたいだ新しい順)を作る関数を tests/unit で確かめている。片方の配列が空でも、もう片方の記事だけで行ができることも確かめている
   - dist の HTML の <script> が増えていない(Vercel Analytics だけ)
   - npm run verify が通る
   depends_on:
   - T-037
   size: M
-  human_check: Vercel の Preview で、Zenn と note の記事が実際に2列に分かれて出るか、375px で縦に並ぶかを見る。
+  human_check: Vercel の Preview で、Zenn と note の記事が1つの一覧に日付の新しい順で混ざって出るか、媒体バッジで見分けられるかを、375px とデスクトップで見る。
   status: todo
 - id: T-041
   title: Experience を Timeline に置き換える

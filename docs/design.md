@@ -581,7 +581,7 @@ T-014、T-015、T-016 が、実装では直せない理由で止まった(spec �
   1. `#top` Hero: 氏名、所属、コア領域のタグ(`profile.coreTags`、3〜4個。例: Satellite Remote Sensing / Spatial Data / AI & Cloud Backend)、主要な外部リンク(GitHub / Zenn / note / Speaker Deck / X / Mail / Resume (PDF))。机のイラストはそのまま。
   2. `#about` About & Media Policy: 専門領域を2〜4枚の小さなカード(Bento Grid 風。`sm` 以上で2列)で示し、その下に「Media Policy」として上の表の4媒体をミニカード(アイコン、媒体名、役割のラベル、1行の説明、プロフィールへのリンク)で並べる。About の段落(`resume.about`)と Technical Skills(`#skills`)は廃止する(技術はプロジェクトのカードのタグで見せる)。
   3. `#projects` Featured Projects: ティーザー型のカード(下の型)。
-  4. `#articles` Articles & Logs: Zenn(技術解説)と note(ログ)を、`sm` 以上で2列、375px では縦に分けて出す。**タブにはしない**(切り替えに JS が要り、Zero-JS の規律に反するため)。
+  4. `#articles` Articles & Logs: Zenn(技術解説)と note(ログ)の記事を、列に分けずに1つの一覧に混ぜ、日付の新しい順に出す。どちらの媒体かは各行の媒体バッジで見分ける。**タブにはしない**(切り替えに JS が要り、Zero-JS の規律に反するため)。(2026-10-19 に2列から変えた。自分の記録なので、媒体で分けるより時系列で一続きに読めるほうがよいと開発者が判断した)
   5. `#timeline` Timeline: 学歴、共同研究、展示会、学会発表、カンファレンス参加などを新しい順に縦の線で並べ、各項目に note / Slide などへのリンクを添える。Experience & Education(`#experience`)はこれに置き換える。
 - Header の nav は About / Projects / Articles / Timeline にする。
 
